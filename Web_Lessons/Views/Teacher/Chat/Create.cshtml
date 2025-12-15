@@ -1,0 +1,257 @@
+﻿@model Web_Lessons.ViewModels.CreateChatViewModel
+@{
+    Layout = "_TeacherLayout";
+    ViewData["Title"] = "New Chat";
+
+    var studentId = ViewBag.StudentId as string;
+    var studentName = ViewBag.StudentName as string;
+    var studentProfileImage = ViewBag.StudentProfileImage as string;
+    var enrolledStudents = ViewBag.EnrolledStudents as List<Web_Lessons.Models.ApplicationUser>;
+}
+
+<div class="main-container">
+    <div class="content-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">
+                    <i class="fas fa-comment-medical me-2 text-primary"></i>
+                    Start New Chat
+                </h1>
+                <p class="text-muted mb-0">Send a message to a student</p>
+            </div>
+            <a href="@Url.Action("TeacherChat", "Teacher")" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Chats
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                @if (!string.IsNullOrEmpty(studentId))
+                {
+                    <!-- Student Info (if coming from student link) -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                @if (!string.IsNullOrEmpty(studentProfileImage))
+                                {
+                                    <img src="@studentProfileImage"
+                                         alt="@studentName"
+                                         class="rounded-circle me-3"
+                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3"
+                                         style="width: 60px; height: 60px;">
+                                        <span class="text-white fw-bold" style="font-size: 1.5rem;">
+                                            @studentName[0]
+                                        </span>
+                                    </div>
+                                }
+                                <div>
+                                    <h5 class="mb-1">@studentName</h5>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-user-graduate me-1"></i>Student
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="selectedStudentId" value="@studentId">
+                }
+                else
+                {
+                    <!-- Student Selection -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Select Student</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Search Students</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="studentSearch"
+                                           placeholder="Search by name or email...">
+                                </div>
+                            </div>
+
+                            <div id="studentList" class="mt-3" style="max-height: 300px; overflow-y: auto;">
+                                @if (enrolledStudents != null && enrolledStudents.Any())
+                                {
+                                    <div class="list-group">
+                                        @foreach (var student in enrolledStudents)
+                                        {
+                                            <a href="javascript:void(0)"
+                                               class="list-group-item list-group-item-action student-item"
+                                               data-student-id="@student.Id"
+                                               data-student-name="@student.FullName"
+                                               data-student-image="@student.ProfileImageUrl">
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(student.ProfileImageUrl))
+                                                    {
+                                                        <img src="@student.ProfileImageUrl"
+                                                             alt="@student.FullName"
+                                                             class="rounded-circle me-3"
+                                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3"
+                                                             style="width: 40px; height: 40px;">
+                                                            <span class="text-white">
+                                                                @student.FullName[0]
+                                                            </span>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <h6 class="mb-1">@student.FullName</h6>
+                                                        <p class="text-muted small mb-0">@student.Email</p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">No students enrolled in your courses</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Chat Form -->
+                <form id="chatForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="teacherStudentId" name="StudentId" />
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            Your Message
+                        </label>
+                        <textarea name="InitialMessage"
+                                  class="form-control"
+                                  rows="5"
+                                  placeholder="Type your message here..."
+                                  style="resize: none;"></textarea>
+                        <div class="form-text">
+                            This will be your first message to start the conversation.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-paper-plane me-2"></i>Send Message
+                        </button>
+                        <a href="@Url.Action("TeacherChat", "Teacher")" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // If student is pre-selected
+            const preSelectedStudent = $('#selectedStudentId').val();
+            if (preSelectedStudent) {
+                $('#teacherStudentId').val(preSelectedStudent);
+            }
+
+            // Student selection
+            $('.student-item').click(function () {
+                const studentId = $(this).data('student-id');
+                const studentName = $(this).data('student-name');
+
+                $('#teacherStudentId').val(studentId);
+
+                // Highlight selected
+                $('.student-item').removeClass('active');
+                $(this).addClass('active');
+
+                showToast(`Selected: ${studentName}`, 'success');
+            });
+
+            // Student search
+            $('#studentSearch').on('input', function () {
+                const searchTerm = $(this).val().toLowerCase();
+                $('.student-item').each(function () {
+                    const text = $(this).text().toLowerCase();
+                    $(this).toggle(text.includes(searchTerm));
+                });
+            });
+
+            // Form submission
+            $('#chatForm').submit(function (e) {
+                e.preventDefault();
+
+                const studentId = $('#teacherStudentId').val();
+                const message = $('textarea[name="InitialMessage"]').val().trim();
+
+                if (!studentId) {
+                    showToast('Please select a student', 'warning');
+                    return;
+                }
+
+                if (!message) {
+                    showToast('Please enter a message', 'warning');
+                    return;
+                }
+
+                const btn = $('#submitBtn');
+                btn.prop('disabled', true).html(`
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            Sending...
+                        `);
+
+                $.ajax({
+                    url: '/Teacher/StartChatWithStudent',
+                    type: 'POST',
+                    data: {
+                        studentId: studentId,
+                        initialMessage: message,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            showToast('Chat created successfully!', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/Teacher/TeacherChatDetails/' + response.chatId;
+                            }, 1500);
+                        } else {
+                            showToast(response.message || 'Failed to create chat', 'danger');
+                            btn.prop('disabled', false).html(`
+                                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                                    `);
+                        }
+                    },
+                    error: function (xhr) {
+                        let errorMessage = 'Failed to send message';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMessage = response.message || errorMessage;
+                        } catch (e) { }
+
+                        showToast('Error: ' + errorMessage, 'danger');
+                        btn.prop('disabled', false).html(`
+                                    <i class="fas fa-paper-plane me-2"></i>Send Message
+                                `);
+                    }
+                });
+            });
+
+            // Auto-focus textarea
+            $('textarea[name="InitialMessage"]').focus();
+        });
+    </script>
+}

@@ -1,0 +1,517 @@
+﻿@model Web_Lessons.ViewModels.TeacherChatDetailsViewModel
+@{
+    Layout = "_TeacherLayout";
+    ViewData["Title"] = "Chat";
+}
+
+<div class="container-fluid chat-container">
+    <div class="row h-100">
+        <!-- Left Sidebar - Chat List -->
+        <div class="col-md-4 col-lg-3 border-end bg-white p-0 chat-sidebar">
+            <!-- Header -->
+            <div class="p-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">Messages</h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+
+                <!-- Search -->
+                <div class="input-group mb-3">
+                    <span class="input-group-text bg-light">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control" id="chatSearch" placeholder="Search chats...">
+                </div>
+            </div>
+
+            <!-- Chat List -->
+            <div class="flex-grow-1 overflow-auto" id="chatsList">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2 text-muted">Loading chats...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="col-md-8 col-lg-9 p-0">
+            <div class="d-flex flex-column h-100">
+                <!-- Chat Header -->
+                <div class="chat-header bg-white p-3 border-bottom">
+                    <div class="d-flex align-items-center">
+                        <!-- Back Button for Mobile -->
+                        <button class="btn btn-outline-secondary btn-sm me-3 d-md-none sidebar-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+
+                        <!-- User Info -->
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <div class="position-relative me-3">
+                                <img src="@Model.Chat.OtherUserProfileImage"
+                                     alt="@Model.Chat.OtherUserName"
+                                     class="rounded-circle"
+                                     style="width: 45px; height: 45px; object-fit: cover;"
+                                     onerror="this.src='/images/avatar.png'">
+                                <span class="position-absolute bottom-0 end-0 @(Model.Chat.IsOnline ? "bg-success" : "bg-secondary") rounded-circle"
+                                      style="width: 10px; height: 10px; border: 2px solid white;"></span>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">@Model.Chat.OtherUserName</h5>
+                                <small class="@(Model.Chat.IsOnline ? "text-success" : "text-muted")">
+                                    <i class="fas fa-circle fa-xs me-1"></i>
+                                    @(Model.Chat.IsOnline ? "Online" : "Offline")
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="chat-messages flex-grow-1 p-3" id="chatMessages">
+                    @if (!Model.Messages.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No messages yet</p>
+                            <p class="text-muted small">Send a message to start the conversation</p>
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (var message in Model.Messages)
+                        {
+                            if (message.IsOwnMessage)
+                            {
+                                <!-- Sent Message (Teacher) -->
+                                <div class="d-flex justify-content-end mb-3">
+                                    <div class="bg-primary text-white p-3 rounded"
+                                         style="border-radius: 18px 4px 18px 18px; max-width: 70%;">
+                                        <div class="message-text">
+                                            @Html.Raw(message.Content.Replace("\n", "<br>"))
+                                        </div>
+                                        <div class="message-time mt-1 text-white-50 small text-end">
+                                            @message.CreatedAt.ToString("hh:mm tt")
+                                            @if (message.IsRead)
+                                            {
+                                                <i class="fas fa-check-double ms-1"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-check ms-1"></i>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- Received Message (Student) -->
+                                <div class="d-flex justify-content-start mb-3">
+                                    <div class="bg-white p-3 rounded shadow-sm"
+                                         style="border-radius: 4px 18px 18px 18px; max-width: 70%;">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <img src="@message.SenderProfileImage"
+                                                 alt="@message.SenderName"
+                                                 class="rounded-circle me-2"
+                                                 style="width: 30px; height: 30px;"
+                                                 onerror="this.src='/images/avatar.png'">
+                                            <strong class="me-2">@message.SenderName</strong>
+                                            <small class="text-muted ms-auto">@message.TimeAgo</small>
+                                        </div>
+                                        <div class="message-text">
+                                            @Html.Raw(message.Content.Replace("\n", "<br>"))
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input bg-white p-3 border-top">
+                    <form id="sendMessageForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="currentChatId" value="@Model.Chat.Id">
+
+                        <div class="input-group">
+                            <textarea class="form-control"
+                                      name="Content"
+                                      id="messageInput"
+                                      rows="1"
+                                      placeholder="Type your message..."
+                                      style="resize: none;"></textarea>
+                            <button type="submit" class="btn btn-primary ms-2" id="sendMessageBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Chat Modal -->
+<div class="modal fade" id="newChatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Start New Chat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="studentsList">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-2 text-muted">Loading students...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-container {
+        height: calc(100vh - 70px);
+    }
+
+    .chat-messages {
+        overflow-y: auto;
+        min-height: 300px;
+        max-height: calc(100vh - 200px);
+        background: #f0f2f5;
+    }
+
+    .chat-sidebar {
+        border-right: 1px solid #dee2e6;
+    }
+
+    .sidebar-toggle {
+        display: none;
+    }
+
+    @@media (max-width: 768px) {
+        .chat-sidebar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 70px);
+            z-index: 1040;
+            display: none;
+        }
+
+            .chat-sidebar.show {
+                display: block;
+            }
+
+        .sidebar-toggle {
+            display: inline-block;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        let currentChatId = @Model.Chat.Id;
+        let connection = null;
+
+        $(document).ready(function () {
+            // 1. تحميل المحادثات
+            loadChats();
+
+            // 2. إعداد الأحداث
+            setupEvents();
+
+            // 3. تحميل الطلاب للمودال
+            $('#newChatModal').on('show.bs.modal', function () {
+                loadStudentsForModal();
+            });
+        });
+
+        // ========== 1. تحميل المحادثات ==========
+        function loadChats() {
+            $.ajax({
+                url: '/Teacher/GetTeacherChats',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success && response.chats.length > 0) {
+                        renderChats(response.chats);
+                    } else {
+                        $('#chatsList').html(`
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">No conversations yet</p>
+                                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                                            Start Your First Chat
+                                        </button>
+                                    </div>
+                                `);
+                    }
+                },
+                error: function () {
+                    $('#chatsList').html('<div class="alert alert-danger m-3">Error loading chats</div>');
+                }
+            });
+        }
+
+        function renderChats(chats) {
+            let html = '<div class="list-group list-group-flush">';
+
+            chats.forEach(chat => {
+                const isActive = chat.id == currentChatId;
+                const activeClass = isActive ? 'active' : '';
+                const unreadBadge = chat.unreadCount > 0 ?
+                    `<span class="badge bg-danger rounded-pill float-end">${chat.unreadCount}</span>` : '';
+
+                const lastMessage = chat.lastMessage ?
+                    (chat.lastMessage.length > 25 ? chat.lastMessage.substring(0, 25) + '...' : chat.lastMessage) :
+                    'No messages yet';
+
+                html += `
+                            <a href="/Teacher/TeacherChatDetails/${chat.id}"
+                               class="list-group-item list-group-item-action border-0 ${activeClass}"
+                               style="border-left: ${isActive ? '4px solid #007bff' : 'none'}">
+                                <div class="d-flex align-items-center">
+                                    <div class="position-relative me-3">
+                                        <img src="${chat.otherUserProfileImage}"
+                                             alt="${chat.otherUserName}"
+                                             class="rounded-circle"
+                                             style="width: 40px; height: 40px; object-fit: cover;"
+                                             onerror="this.src='/images/avatar.png'">
+                                        ${chat.isOnline ?
+                        '<span class="position-absolute bottom-0 end-0 bg-success rounded-circle" style="width: 8px; height: 8px; border: 2px solid white;"></span>' : ''}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">${chat.otherUserName}</h6>
+                                        <p class="text-muted small mb-0 text-truncate" style="max-width: 150px;">
+                                            ${lastMessage}
+                                        </p>
+                                    </div>
+                                    ${unreadBadge}
+                                </div>
+                            </a>
+                        `;
+            });
+
+            html += '</div>';
+            $('#chatsList').html(html);
+
+            // Search functionality
+            $('#chatSearch').on('input', function () {
+                const searchTerm = $(this).val().toLowerCase();
+                $('.list-group-item').each(function () {
+                    const text = $(this).text().toLowerCase();
+                    $(this).toggle(text.includes(searchTerm));
+                });
+            });
+        }
+
+        // ========== 2. إعداد الأحداث ==========
+        function setupEvents() {
+            // Send message
+            $('#sendMessageForm').submit(function (e) {
+                e.preventDefault();
+                sendMessage();
+            });
+
+            // Enter key to send
+            $('#messageInput').keydown(function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Auto-resize textarea
+            $('#messageInput').on('input', function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+            // Mobile sidebar toggle
+            $('.sidebar-toggle').click(function () {
+                $('.chat-sidebar').toggleClass('show');
+            });
+        }
+
+        // ========== 3. إرسال الرسالة ==========
+        function sendMessage() {
+            const messageContent = $('#messageInput').val().trim();
+
+            if (!messageContent) {
+                showToast('Please enter a message', 'warning');
+                return;
+            }
+
+            const btn = $('#sendMessageBtn');
+            const originalHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            $.ajax({
+                url: '/Teacher/SendTeacherMessage',
+                type: 'POST',
+                data: {
+                    ChatId: currentChatId,
+                    Content: messageContent,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#messageInput').val('');
+                        $('#messageInput').css('height', 'auto');
+
+                        // Add to UI
+                        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const msgHtml = `
+                                    <div class="d-flex justify-content-end mb-3">
+                                        <div class="bg-primary text-white p-3 rounded" style="border-radius: 18px 4px 18px 18px; max-width: 70%;">
+                                            <div class="message-text">${escapeHtml(messageContent).replace(/\n/g, '<br>')}</div>
+                                            <div class="message-time mt-1 text-white-50 small text-end">
+                                                ${time}
+                                                <i class="fas fa-check ms-1"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                        $('#chatMessages').append(msgHtml);
+                        scrollToBottom();
+
+                        loadChats();
+                        showToast('Message sent!', 'success');
+                    } else {
+                        showToast(response.message || 'Error', 'danger');
+                    }
+                },
+                error: function (xhr) {
+                    console.error('Error:', xhr);
+                    showToast('Error sending message', 'danger');
+                },
+                complete: function () {
+                    btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i>');
+                }
+            });
+        }
+
+        // ========== 4. تحميل الطلاب للمودال ==========
+        function loadStudentsForModal() {
+            $.ajax({
+                url: '/Teacher/GetTeacherEnrolledStudents',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success && response.students.length > 0) {
+                        let html = '<div class="list-group">';
+
+                        response.students.forEach(student => {
+                            html += `
+                                        <a href="javascript:void(0)"
+                                           class="list-group-item list-group-item-action"
+                                           onclick="startChatWithStudent('${student.id}', '${escapeHtml(student.name)}')">
+                                            <div class="d-flex align-items-center">
+                                                <img src="${student.profileImageUrl || '/images/avatar.png'}"
+                                                     alt="${student.name}"
+                                                     class="rounded-circle me-3"
+                                                     style="width: 40px; height: 40px;">
+                                                <div>
+                                                    <h6 class="mb-0">${student.name}</h6>
+                                                    <small class="text-muted">${student.email}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    `;
+                        });
+
+                        html += '</div>';
+                        $('#studentsList').html(html);
+                    } else {
+                        $('#studentsList').html(`
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">No students available</p>
+                                    </div>
+                                `);
+                    }
+                },
+                error: function () {
+                    $('#studentsList').html('<div class="alert alert-danger">Error loading students</div>');
+                }
+            });
+        }
+
+        // Global function لبدء محادثة
+        window.startChatWithStudent = function (studentId, studentName) {
+            const initialMessage = prompt(`Send first message to ${studentName}:`, `Hello ${studentName}, I'm your teacher. How can I help you?`);
+
+            if (initialMessage === null) return;
+
+            $('#newChatModal').modal('hide');
+
+            $.ajax({
+                url: '/Teacher/StartChatWithStudent',
+                type: 'POST',
+                data: {
+                    studentId: studentId,
+                    initialMessage: initialMessage,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        showToast('Chat created successfully!', 'success');
+                        setTimeout(() => {
+                            if (response.chatId) {
+                                window.location.href = '/Teacher/TeacherChatDetails/' + response.chatId;
+                            } else {
+                                window.location.reload();
+                            }
+                        }, 1000);
+                    } else {
+                        showToast(response.message || 'Failed to create chat', 'danger');
+                    }
+                },
+                error: function () {
+                    showToast('Error creating chat', 'danger');
+                }
+            });
+        };
+
+        // ========== دوال مساعدة ==========
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = $(`
+                        <div class="toast align-items-center text-white bg-${type}" role="alert">
+                            <div class="d-flex">
+                                <div class="toast-body">${message}</div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                            </div>
+                        </div>
+                    `);
+
+            const container = $('.toast-container');
+            if (container.length === 0) {
+                $('body').append('<div class="toast-container position-fixed top-0 end-0 p-3"></div>');
+            }
+
+            $('.toast-container').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+}

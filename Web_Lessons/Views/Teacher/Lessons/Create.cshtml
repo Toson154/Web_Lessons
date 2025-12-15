@@ -1,0 +1,1155 @@
+﻿@model Web_Lessons.ViewModels.CreateLessonViewModel
+@{
+    ViewData["Title"] = "Create New Lesson";
+    Layout = "_TeacherLayout";
+    var courses = ViewBag.Courses as List<SelectListItem>;
+}
+
+@section Styles {
+    <style>
+        .video-upload-container {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+            .video-upload-container:hover {
+                border-color: #3498db;
+                background-color: #e3f2fd;
+            }
+
+            .video-upload-container.dragover {
+                border-color: #2ecc71;
+                background-color: #d1f7c4;
+            }
+
+            .video-upload-container.border-danger {
+                border-color: #e74c3c !important;
+                background-color: #ffeaea;
+            }
+
+            .video-upload-container.border-success {
+                border-color: #2ecc71 !important;
+                background-color: #e8f8ef;
+            }
+
+        .video-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .upload-progress {
+            margin-top: 1rem;
+        }
+
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+
+            .nav-tabs .nav-link {
+                border: none;
+                color: #6c757d;
+                font-weight: 500;
+            }
+
+                .nav-tabs .nav-link.active {
+                    color: #3498db;
+                    border-bottom: 2px solid #3498db;
+                    background-color: transparent;
+                }
+
+        .form-control.is-valid {
+            border-color: #2ecc71;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%232ecc71' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        }
+
+        .form-control.is-invalid {
+            border-color: #e74c3c;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23e74c3c' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23e74c3c' stroke='none'/%3e%3c/svg%3e");
+        }
+
+        .validation-summary {
+            font-size: 0.9rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+            .step-indicator::before {
+                content: '';
+                position: absolute;
+                top: 20px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background-color: #dee2e6;
+                z-index: 1;
+            }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+            border: 2px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .step.active .step-circle {
+            border-color: #3498db;
+            background-color: #3498db;
+            color: white;
+        }
+
+        .step.completed .step-circle {
+            border-color: #2ecc71;
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .step.active .step-label {
+            color: #3498db;
+            font-weight: 500;
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+}
+
+<div class="container-fluid">
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step active" id="step1">
+            <div class="step-circle">1</div>
+            <span class="step-label">Basic Info</span>
+        </div>
+        <div class="step" id="step2">
+            <div class="step-circle">2</div>
+            <span class="step-label">Content</span>
+        </div>
+        <div class="step" id="step3">
+            <div class="step-circle">3</div>
+            <span class="step-label">Review & Create</span>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Create New Lesson</h2>
+        <a asp-action="Lessons" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Lessons
+        </a>
+    </div>
+
+    <!-- Main Form -->
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="CreateLesson" method="post" enctype="multipart/form-data"
+                  id="lessonForm" class="needs-validation" novalidate>
+                @Html.AntiForgeryToken()
+
+                <!-- Hidden field for video URL -->
+                <input type="hidden" asp-for="VideoUrl" id="videoUrlField" />
+
+                <!-- Step 1: Basic Information -->
+                <div id="step1-content" class="form-step">
+                    <h4 class="mb-4"><i class="fas fa-info-circle me-2 text-primary"></i>Basic Information</h4>
+
+                    <!-- Course Selection -->
+                    <div class="mb-4">
+                        <label asp-for="CourseId" class="form-label fw-bold">
+                            Select Course <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="CourseId" class="form-select" required id="courseSelect">
+                            @if (courses != null && courses.Any())
+                            {
+                                <option value="">-- Choose a Course --</option>
+                                @foreach (var course in courses)
+                                {
+                                    <option value="@course.Value" selected="@(Model.CourseId.ToString() == course.Value)">
+                                        @course.Text
+                                    </option>
+                                }
+                            }
+                            else
+                            {
+                                <option value="">No courses available</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CourseId" class="text-danger small"></span>
+                        <div class="form-text small text-muted">
+                            <span class="text-danger">*</span> Required field
+                        </div>
+                    </div>
+
+                    <!-- Lesson Title -->
+                    <div class="mb-4">
+                        <label asp-for="Title" class="form-label fw-bold">
+                            Lesson Title <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title" class="form-control"
+                               placeholder="e.g., Introduction to Algebra"
+                               required maxlength="150" id="Title" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                        <div class="form-text small text-end text-muted" id="titleCounter">
+                            <span id="titleCount">0</span>/150 characters
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label fw-bold">
+                            Lesson Description
+                        </label>
+                        <textarea asp-for="Description" class="form-control"
+                                  rows="4"
+                                  placeholder="Describe what students will learn in this lesson..."
+                                  maxlength="1000" id="descriptionText"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                        <div class="form-text text-end">
+                            <span id="charCount">0</span> / 1000 characters
+                        </div>
+                    </div>
+
+                    <!-- Navigation for Step 1 -->
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-primary" id="nextStep1">
+                            Next: Content <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Content -->
+                <div id="step2-content" class="form-step" style="display: none;">
+                    <h4 class="mb-4"><i class="fas fa-video me-2 text-primary"></i>Lesson Content</h4>
+
+                    <!-- Duration & Order -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="DurationMinutes" class="form-label fw-bold">
+                                Duration <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="DurationMinutes" type="number"
+                                       class="form-control" min="1" max="300" required
+                                       placeholder="30" id="DurationMinutes" />
+                                <span class="input-group-text">minutes</span>
+                            </div>
+                            <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+                            <div class="form-text small">
+                                Recommended: 15-45 minutes per lesson
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Order" class="form-label fw-bold">
+                                Order in Course <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Order" type="number"
+                                   class="form-control" min="1" required
+                                   id="orderInput" placeholder="Auto-calculated" />
+                            <span asp-validation-for="Order" class="text-danger small"></span>
+                            <div class="form-text">
+                                Position of this lesson in the course sequence
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Upload Section -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-3">
+                            Lesson Video <span class="text-danger">*</span>
+                        </label>
+
+                        <!-- Tabs for video options -->
+                        <ul class="nav nav-tabs mb-3" id="videoTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="url-tab" data-bs-toggle="tab"
+                                        data-bs-target="#url-pane" type="button" role="tab">
+                                    <i class="fas fa-link me-1"></i>Video URL
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="upload-tab" data-bs-toggle="tab"
+                                        data-bs-target="#upload-pane" type="button" role="tab">
+                                    <i class="fas fa-upload me-1"></i>Upload Video
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="videoTabsContent">
+                            <!-- URL Tab -->
+                            <div class="tab-pane fade show active" id="url-pane" role="tabpanel">
+                                <div class="form-group">
+                                    <input type="url" class="form-control"
+                                           placeholder="https://youtube.com/watch?v=..."
+                                           id="videoUrlInput">
+                                    <div class="form-text mt-2">
+                                        YouTube, Vimeo, or direct video link
+                                    </div>
+                                </div>
+
+                                <!-- URL Preview -->
+                                <div id="urlPreviewContainer" class="mt-3" style="display: none;">
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <span id="urlPreviewText">Video URL added successfully</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Upload Tab -->
+                            <div class="tab-pane fade" id="upload-pane" role="tabpanel">
+                                <!-- Drag & Drop Area -->
+                                <div class="video-upload-container" id="dropArea">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                    <h5>Drop video file here</h5>
+                                    <p class="text-muted">or click to browse</p>
+                                    <input type="file" class="d-none" id="videoFileInput"
+                                           accept="video/*,.mp4,.mov,.avi,.mkv,.webm,.wmv">
+                                    <div class="form-text mt-2">
+                                        Max 2GB • MP4, MOV, AVI, MKV, WEBM, WMV
+                                    </div>
+                                </div>
+
+                                <!-- Selected File Info -->
+                                <div id="fileInfo" class="mt-3" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-file-video me-2"></i>
+                                                <span id="fileName"></span>
+                                                <small class="d-block text-muted" id="fileSize"></small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    id="removeFile">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Upload Progress -->
+                                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                                    <div class="progress mb-2">
+                                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                                             role="progressbar" style="width: 0%">
+                                            <span id="progressPercent">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div id="progressText" class="small text-muted">Preparing upload...</div>
+                                        <button type="button" id="cancelUpload"
+                                                class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-times me-1"></i> Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video Preview -->
+                        <div id="videoPreviewContainer" class="mt-3" style="display: none;">
+                            <h6 class="mb-2">Video Preview:</h6>
+                            <div class="position-relative">
+                                <video id="videoPreview" controls class="video-preview w-100">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i> Ready
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video Validation Message -->
+                        <div id="videoValidation" class="text-danger small mt-2" style="display: none;">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            Please provide a video URL or upload a video file
+                        </div>
+                    </div>
+
+                    <!-- PDF File Upload -->
+                    <div class="mb-4">
+                        <label asp-for="PdfFile" class="form-label fw-bold">
+                            PDF Notes (Optional)
+                        </label>
+                        <div class="input-group">
+                            <input asp-for="PdfFile" type="file"
+                                   class="form-control"
+                                   accept=".pdf" id="pdfFileInput" />
+                            <button class="btn btn-outline-secondary" type="button"
+                                    onclick="clearPdfFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="PdfFile" class="text-danger small"></span>
+                        <div class="form-text small">
+                            Supplementary material for students (Max 50MB)
+                        </div>
+                    </div>
+
+                    <!-- Navigation for Step 2 -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" id="prevStep2">
+                            <i class="fas fa-arrow-left me-2"></i> Back: Basic Info
+                        </button>
+                        <button type="button" class="btn btn-primary" id="nextStep2">
+                            Next: Review & Create <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Review & Create -->
+                <div id="step3-content" class="form-step" style="display: none;">
+                    <h4 class="mb-4"><i class="fas fa-check-circle me-2 text-primary"></i>Review & Create</h4>
+
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Review your lesson details before creating
+                    </div>
+
+                    <!-- Review Summary -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Lesson Summary</h5>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th style="width: 40%">Course:</th>
+                                                <td id="reviewCourse">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Lesson Title:</th>
+                                                <td id="reviewTitle">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Duration:</th>
+                                                <td id="reviewDuration">- minutes</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Order:</th>
+                                                <td id="reviewOrder">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th style="width: 40%">Video:</th>
+                                                <td id="reviewVideo">
+                                                    <span class="badge bg-warning">Not set</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Description:</th>
+                                                <td id="reviewDescription">
+                                                    <span id="reviewDescText">-</span>
+                                                    <span id="reviewDescMore" class="text-muted small"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>PDF Notes:</th>
+                                                <td id="reviewPdf">
+                                                    <span class="badge bg-secondary">None</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validation Summary -->
+                    <div id="validationSummary" class="alert alert-warning" style="display: none;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="validationMessage">Please complete all required fields</span>
+                    </div>
+
+                    <!-- Navigation for Step 3 -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" id="prevStep3">
+                            <i class="fas fa-arrow-left me-2"></i> Back: Content
+                        </button>
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary me-2" id="resetBtn">
+                                <i class="fas fa-redo me-1"></i> Start Over
+                            </button>
+                            <button type="submit" class="btn btn-success btn-lg px-4" id="submitBtn" disabled>
+                                <i class="fas fa-plus-circle me-2"></i> Create Lesson
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Tips -->
+                <div class="card bg-light border-0 mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            Tips for creating effective lessons
+                        </h6>
+                        <ul class="small mb-0">
+                            <li class="mb-2">Keep video lessons under 30 minutes for better engagement</li>
+                            <li class="mb-2">Use clear, descriptive titles that students can easily understand</li>
+                            <li class="mb-2">Provide PDF notes for students to follow along</li>
+                            <li class="mb-2">Test video playback before publishing</li>
+                            <li>Organize lessons in logical sequence within the course</li>
+                        </ul>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("Create Lesson page loaded - Enhanced Version");
+
+            // ========== STEP MANAGEMENT ==========
+            let currentStep = 1;
+            let formIsValid = false;
+            let currentUpload = null;
+            let uploadController = null;
+
+            // Initialize step indicators
+            updateStepIndicators();
+
+            // Step navigation
+            $('#nextStep1').click(function () {
+                if (validateStep1()) {
+                    showStep(2);
+                }
+            });
+
+            $('#prevStep2').click(function () {
+                showStep(1);
+            });
+
+            $('#nextStep2').click(function () {
+                if (validateStep2()) {
+                    updateReviewSummary();
+                    showStep(3);
+                    validateFinalStep();
+                }
+            });
+
+            $('#prevStep3').click(function () {
+                showStep(2);
+            });
+
+            function showStep(step) {
+                // Hide all steps
+                $('.form-step').hide();
+
+                // Show selected step
+                $(`#step${step}-content`).show();
+
+                // Update current step
+                currentStep = step;
+                updateStepIndicators();
+
+                // Scroll to top of form
+                $('html, body').animate({
+                    scrollTop: $('.step-indicator').offset().top - 100
+                }, 300);
+            }
+
+            function updateStepIndicators() {
+                $('.step').removeClass('active completed');
+
+                for (let i = 1; i <= 3; i++) {
+                    const stepElement = $(`#step${i}`);
+                    if (i < currentStep) {
+                        stepElement.addClass('completed');
+                    } else if (i === currentStep) {
+                        stepElement.addClass('active');
+                    }
+                }
+            }
+
+            // ========== STEP VALIDATION ==========
+            function validateStep1() {
+                let isValid = true;
+                const courseId = $('#courseSelect').val();
+                const title = $('#Title').val().trim();
+
+                if (!courseId) {
+                    $('#courseSelect').addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $('#courseSelect').removeClass('is-invalid').addClass('is-valid');
+                }
+
+                if (!title || title.length === 0 || title.length > 150) {
+                    $('#Title').addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $('#Title').removeClass('is-invalid').addClass('is-valid');
+                }
+
+                return isValid;
+            }
+
+            function validateStep2() {
+                let isValid = true;
+                const duration = $('#DurationMinutes').val();
+                const order = $('#orderInput').val();
+                const videoUrl = $('#videoUrlField').val();
+
+                // Validate duration
+                if (!duration || duration < 1 || duration > 300) {
+                    $('#DurationMinutes').addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $('#DurationMinutes').removeClass('is-invalid').addClass('is-valid');
+                }
+
+                // Validate order
+                if (!order || order < 1) {
+                    $('#orderInput').addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $('#orderInput').removeClass('is-invalid').addClass('is-valid');
+                }
+
+                // Validate video
+                if (!videoUrl || videoUrl.trim().length === 0) {
+                    $('#videoValidation').show();
+                    $('.video-upload-container').addClass('border-danger');
+                    isValid = false;
+                } else {
+                    $('#videoValidation').hide();
+                    $('.video-upload-container').removeClass('border-danger').addClass('border-success');
+                }
+
+                return isValid;
+            }
+
+            function validateFinalStep() {
+                const courseId = $('#courseSelect').val();
+                const title = $('#Title').val().trim();
+                const duration = $('#DurationMinutes').val();
+                const order = $('#orderInput').val();
+                const videoUrl = $('#videoUrlField').val();
+
+                formIsValid = courseId && title && duration && order && videoUrl;
+
+                if (formIsValid) {
+                    $('#submitBtn').prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
+                    $('#validationSummary').hide();
+                } else {
+                    $('#submitBtn').prop('disabled', true).removeClass('btn-success').addClass('btn-secondary');
+                    $('#validationSummary').show();
+                    $('#validationMessage').text('Please complete all required fields in previous steps');
+                }
+            }
+
+            // ========== CHARACTER COUNTERS ==========
+            function updateCharacterCounts() {
+                // Title counter
+                const titleLength = $('#Title').val().length;
+                $('#titleCount').text(titleLength);
+                if (titleLength > 150) {
+                    $('#titleCounter').addClass('text-danger');
+                } else {
+                    $('#titleCounter').removeClass('text-danger');
+                }
+
+                // Description counter
+                const descLength = $('#descriptionText').val().length;
+                $('#charCount').text(descLength);
+                if (descLength > 1000) {
+                    $('#charCount').addClass('text-danger fw-bold');
+                } else {
+                    $('#charCount').removeClass('text-danger fw-bold');
+                }
+            }
+
+            // ========== AUTO-ORDER CALCULATION ==========
+            $('#courseSelect').change(function () {
+                var courseId = $(this).val();
+                if (courseId) {
+                    $('#orderInput').val('Calculating...');
+
+                    $.get('/Teacher/GetNextOrderNumber', { courseId: courseId })
+                        .done(function (data) {
+                            if (data && data.order) {
+                                $('#orderInput').val(data.order);
+                            } else {
+                                $('#orderInput').val(1);
+                            }
+                        })
+                        .fail(function () {
+                            console.error('Failed to get order number');
+                            $('#orderInput').val(1);
+                        });
+                } else {
+                    $('#orderInput').val('');
+                }
+            });
+
+            // ========== VIDEO HANDLING ==========
+            // Video URL input
+            $('#videoUrlInput').on('input', function () {
+                const url = $(this).val().trim();
+                if (url && isValidUrl(url)) {
+                    $('#videoUrlField').val(url);
+                    $('#urlPreviewContainer').show();
+                    $('#urlPreviewText').text(url.length > 60 ? url.substring(0, 60) + '...' : url);
+                    $('#urlPreviewContainer').removeClass('alert-danger').addClass('alert-success');
+                    $('.video-upload-container').removeClass('border-danger').addClass('border-success');
+                    $('#videoValidation').hide();
+                } else if (url) {
+                    $('#videoUrlField').val('');
+                    $('#urlPreviewContainer').show();
+                    $('#urlPreviewText').text('Invalid URL format');
+                    $('#urlPreviewContainer').removeClass('alert-success').addClass('alert-danger');
+                    $('.video-upload-container').removeClass('border-success').addClass('border-danger');
+                } else {
+                    $('#videoUrlField').val('');
+                    $('#urlPreviewContainer').hide();
+                    $('.video-upload-container').removeClass('border-success border-danger');
+                }
+
+                if (currentStep === 3) validateFinalStep();
+            });
+
+            // Drag and drop functionality
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('videoFileInput');
+
+            dropArea.addEventListener('click', () => fileInput.click());
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropArea.classList.add('dragover');
+            }
+
+            function unhighlight() {
+                dropArea.classList.remove('dragover');
+            }
+
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleVideoFiles(files);
+            }
+
+            fileInput.addEventListener('change', function (e) {
+                handleVideoFiles(this.files);
+            });
+
+            function handleVideoFiles(files) {
+                if (files.length === 0) return;
+
+                const file = files[0];
+                const validExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.wmv'];
+                const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+                if (!validExtensions.includes(fileExtension)) {
+                    showToast('Please select a valid video file (MP4, MOV, AVI, MKV, WEBM, WMV)', 'danger');
+                    return;
+                }
+
+                if (file.size > 2 * 1024 * 1024 * 1024) {
+                    showToast('File is too large. Maximum size is 2GB', 'danger');
+                    return;
+                }
+
+                // Show file info
+                $('#fileName').text(file.name);
+                $('#fileSize').text(formatFileSize(file.size));
+                $('#fileInfo').show();
+
+                // Show preview
+                const objectUrl = URL.createObjectURL(file);
+                const preview = document.getElementById('videoPreview');
+                preview.src = objectUrl;
+                $('#videoPreviewContainer').show();
+
+                // Switch to upload tab
+                $('#upload-tab').tab('show');
+                currentUpload = file;
+
+                // Start upload
+                uploadVideoFile(file);
+            }
+
+            async function uploadVideoFile(file) {
+                try {
+                    currentUpload = file;
+                    uploadController = new AbortController();
+
+                    // Show progress
+                    $('#uploadProgress').show();
+                    updateProgress(0, 'Starting upload...');
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const token = $('input[name="__RequestVerificationToken"]').val();
+
+                    const response = await fetch('/Teacher/UploadVideo', {
+                        method: 'POST',
+                        body: formData,
+                        signal: uploadController.signal,
+                        headers: {
+                            'RequestVerificationToken': token
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Upload failed: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Set video URL
+                        $('#videoUrlField').val(result.videoUrl);
+
+                        // Update progress
+                        updateProgress(100, 'Upload complete!');
+                        $('#progressBar').removeClass('progress-bar-animated')
+                            .removeClass('progress-bar-striped')
+                            .addClass('bg-success');
+
+                        // Show success
+                        showToast('Video uploaded successfully!', 'success');
+                        $('.video-upload-container').removeClass('border-danger').addClass('border-success');
+                        $('#videoValidation').hide();
+
+                        if (currentStep === 3) validateFinalStep();
+                    } else {
+                        throw new Error(result.message || 'Upload failed');
+                    }
+
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        showToast('Upload cancelled', 'warning');
+                    } else {
+                        console.error('Upload error:', error);
+                        showToast(`Upload failed: ${error.message}`, 'danger');
+                        resetUpload();
+                    }
+                }
+            }
+
+            // Remove file
+            $('#removeFile').click(function () {
+                resetUpload();
+            });
+
+            // Cancel upload
+            $('#cancelUpload').click(function () {
+                resetUpload();
+            });
+
+            function resetUpload() {
+                if (uploadController) {
+                    uploadController.abort();
+                }
+
+                $('#fileInfo').hide();
+                resetUploadProgress();
+                $('#videoPreviewContainer').hide();
+                fileInput.value = '';
+                $('#videoUrlField').val('');
+                currentUpload = null;
+
+                const preview = document.getElementById('videoPreview');
+                preview.src = '';
+
+                // Switch back to URL tab
+                $('#url-tab').tab('show');
+                $('.video-upload-container').removeClass('border-success border-danger');
+
+                if (currentStep === 3) validateFinalStep();
+            }
+
+            function resetUploadProgress() {
+                $('#progressBar').css('width', '0%');
+                $('#progressPercent').text('0%');
+                $('#uploadProgress').hide();
+            }
+
+            function updateProgress(percent, message) {
+                $('#progressBar').css('width', percent + '%');
+                $('#progressPercent').text(percent + '%');
+                $('#progressText').text(message);
+            }
+
+            // ========== REVIEW SUMMARY ==========
+            function updateReviewSummary() {
+                // Course
+                const selectedCourse = $('#courseSelect option:selected').text();
+                $('#reviewCourse').text(selectedCourse || '-');
+
+                // Title
+                const title = $('#Title').val().trim();
+                $('#reviewTitle').text(title || '-');
+
+                // Duration
+                const duration = $('#DurationMinutes').val();
+                $('#reviewDuration').text(duration ? duration + ' minutes' : '-');
+
+                // Order
+                const order = $('#orderInput').val();
+                $('#reviewOrder').text(order || '-');
+
+                // Video
+                const videoUrl = $('#videoUrlField').val();
+                if (videoUrl) {
+                    let videoText = videoUrl;
+                    if (videoUrl.length > 40) {
+                        videoText = videoUrl.substring(0, 40) + '...';
+                    }
+                    $('#reviewVideo').html(`<span class="badge bg-success">✓ Set</span><br><small class="text-muted">${videoText}</small>`);
+                } else {
+                    $('#reviewVideo').html('<span class="badge bg-danger">Not set</span>');
+                }
+
+                // Description
+                const description = $('#descriptionText').val().trim();
+                if (description) {
+                    if (description.length > 80) {
+                        $('#reviewDescText').text(description.substring(0, 80) + '...');
+                        $('#reviewDescMore').text(' (' + description.length + ' chars)');
+                    } else {
+                        $('#reviewDescText').text(description);
+                        $('#reviewDescMore').text('');
+                    }
+                } else {
+                    $('#reviewDescText').text('-');
+                    $('#reviewDescMore').text('');
+                }
+
+                // PDF
+                const pdfFile = $('#pdfFileInput')[0].files[0];
+                if (pdfFile) {
+                    $('#reviewPdf').html(`<span class="badge bg-info">✓ Selected</span><br><small class="text-muted">${pdfFile.name}</small>`);
+                } else {
+                    $('#reviewPdf').html('<span class="badge bg-secondary">None</span>');
+                }
+            }
+
+            // ========== FORM SUBMISSION ==========
+            $('#lessonForm').on('submit', function (e) {
+                console.log('Form submission triggered');
+
+                // Final validation
+                if (!formIsValid) {
+                    e.preventDefault();
+                    showToast('Please complete all required fields', 'danger');
+                    showStep(1); // Go back to first step
+                    return false;
+                }
+
+                // Disable submit button
+                const submitBtn = $('#submitBtn');
+                const originalText = submitBtn.html();
+                submitBtn.prop('disabled', true)
+                    .html('<i class="fas fa-spinner fa-spin me-2"></i> Creating Lesson...');
+
+                // Re-enable after 15 seconds
+                setTimeout(() => {
+                    if (submitBtn.prop('disabled')) {
+                        submitBtn.prop('disabled', false).html(originalText);
+                        showToast('Submission taking longer than expected. Please try again.', 'warning');
+                    }
+                }, 15000);
+
+                return true;
+            });
+
+            // ========== RESET FORM ==========
+            $('#resetBtn').click(function (e) {
+                e.preventDefault();
+
+                if (confirm('Are you sure you want to start over? All entered data will be lost.')) {
+                    // Reset form
+                    $('#lessonForm')[0].reset();
+
+                    // Reset upload
+                    resetUpload();
+
+                    // Clear validation classes
+                    $('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+                    $('.video-upload-container').removeClass('border-success border-danger');
+
+                    // Reset to first step
+                    showStep(1);
+
+                    // Reset character counts
+                    updateCharacterCounts();
+
+                    // Reset review summary
+                    updateReviewSummary();
+
+                    // Disable submit button
+                    $('#submitBtn').prop('disabled', true);
+                    formIsValid = false;
+
+                    showToast('Form has been reset. You can start over.', 'info');
+                }
+            });
+
+            // ========== PDF HANDLING ==========
+            function clearPdfFile() {
+                $('#pdfFileInput').val('');
+                showToast('PDF file cleared', 'info');
+                if (currentStep === 3) updateReviewSummary();
+            }
+
+            $('#pdfFileInput').change(function () {
+                var file = this.files[0];
+                var maxSize = 50 * 1024 * 1024; // 50MB
+
+                if (file && file.size > maxSize) {
+                    alert('PDF file size exceeds 50MB limit');
+                    $(this).val('');
+                    showToast('PDF file size exceeds 50MB limit', 'danger');
+                } else if (file) {
+                    showToast(`PDF file selected: ${file.name}`, 'success');
+                }
+
+                if (currentStep === 3) updateReviewSummary();
+            });
+
+            // ========== HELPER FUNCTIONS ==========
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // ========== EVENT LISTENERS ==========
+            // Character counters
+            $('#Title, #descriptionText').on('input', function () {
+                updateCharacterCounts();
+                if (currentStep === 3) updateReviewSummary();
+            });
+
+            // Field validation on input
+            $('input, select, textarea').on('input change', function () {
+                if (currentStep === 3) {
+                    validateFinalStep();
+                    updateReviewSummary();
+                }
+            });
+
+            // Initialize
+            updateCharacterCounts();
+            if ($('#courseSelect').val()) {
+                $('#courseSelect').trigger('change');
+            }
+        });
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const icon = {
+                'success': 'check-circle',
+                'danger': 'exclamation-circle',
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            }[type] || 'info-circle';
+
+            const toast = $(`
+                                <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                                    <div class="d-flex">
+                                        <div class="toast-body">
+                                            <i class="fas fa-${icon} me-2"></i>
+                                            ${message}
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                    </div>
+                                </div>
+                            `);
+
+            if ($('.toast-container').length === 0) {
+                $('body').append('<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>');
+            }
+
+            $('.toast-container').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0], {
+                autohide: true,
+                delay: 5000
+            });
+            bsToast.show();
+
+            toast.on('hidden.bs.toast', function () {
+                $(this).remove();
+            });
+        }
+    </script>
+}

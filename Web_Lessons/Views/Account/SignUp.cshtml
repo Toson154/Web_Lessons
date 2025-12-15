@@ -1,0 +1,143 @@
+﻿@model Web_Lessons.ViewModels.SignUpViewModel
+@{
+    Layout = "_LoginLayout";
+    ViewData["Title"] = "Create Account";
+}
+
+<!-- Display TempData messages -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- 
+
+
+
+Form -->
+<form asp-action="SignUp" method="post">
+    @Html.AntiForgeryToken()
+
+    <!-- Full Name -->
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label">Full Name</label>
+        <input asp-for="FullName" class="form-control" placeholder="Enter your full name" />
+        <span asp-validation-for="FullName" class="text-danger small"></span>
+    </div>
+
+    <!-- Email -->
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label">Email Address</label>
+        <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <!-- Password -->
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label">Password</label>
+        <input asp-for="Password" class="form-control" placeholder="Create a password" />
+        <div class="form-text small">
+            Must be at least 6 characters with 1 digit
+        </div>
+        <span asp-validation-for="Password" class="text-danger small"></span>
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="mb-4">
+        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+        <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm your password" />
+        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+    </div>
+
+    <!-- Account Type Selection -->
+    <div class="mb-3">
+        <label class="form-label">Account Type</label>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="accountType" id="studentType" value="student" checked>
+            <label class="form-check-label" for="studentType">
+                <i class="fas fa-user-graduate me-1"></i> Student
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="accountType" id="teacherType" value="teacher" disabled>
+            <label class="form-check-label text-muted" for="teacherType">
+                <i class="fas fa-chalkboard-teacher me-1"></i> Teacher (Contact admin)
+            </label>
+        </div>
+    </div>
+
+    <!-- Terms & Conditions -->
+    <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="termsCheck" required>
+        <label class="form-check-label small" for="termsCheck">
+            I agree to the <a href="#" class="text-primary">Terms & Conditions</a> and <a href="#" class="text-primary">Privacy Policy</a>
+        </label>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-user-plus me-2"></i>Create Account
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Validate terms checkbox
+            $('form').on('submit', function (e) {
+                if (!$('#termsCheck').is(':checked')) {
+                    e.preventDefault();
+                    alert('Please agree to the Terms & Conditions');
+                    return false;
+                }
+            });
+
+            // Focus on first field
+            $('#FullName').focus();
+
+            // Password strength indicator
+            $('#Password').on('keyup', function () {
+                const password = $(this).val();
+                const strength = checkPasswordStrength(password);
+                updateStrengthIndicator(strength);
+            });
+
+            function checkPasswordStrength(password) {
+                if (password.length < 6) return 0;
+                let score = 0;
+                if (/[a-z]/.test(password)) score++;
+                if (/[A-Z]/.test(password)) score++;
+                if (/[0-9]/.test(password)) score++;
+                if (/[^A-Za-z0-9]/.test(password)) score++;
+                return score;
+            }
+
+            function updateStrengthIndicator(strength) {
+                const indicator = $('#passwordStrength');
+                if (!indicator.length) {
+                    $('<div id="passwordStrength" class="mt-2"></div>').insertAfter('#Password');
+                }
+
+                const texts = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+                const colors = ['danger', 'warning', 'info', 'primary', 'success'];
+
+                $('#passwordStrength').html(`
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar bg-${colors[strength]}"
+                                     style="width: ${(strength / 4) * 100}%"></div>
+                            </div>
+                            <small class="text-${colors[strength]}">${texts[strength]}</small>
+                        `);
+            }
+        });
+    </script>
+}

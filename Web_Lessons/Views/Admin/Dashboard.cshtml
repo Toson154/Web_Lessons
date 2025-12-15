@@ -1,0 +1,265 @@
+﻿@model Web_Lessons.ViewModels.AdminDashboardViewModel
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Description"] = "System overview and statistics";
+}
+
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-primary">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h2 class="mb-2">@Model.TotalUsers</h2>
+            <h6 class="text-uppercase text-muted mb-0">Total Users</h6>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-arrow-up text-success me-1"></i>
+                12% increase this month
+            </small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-success">
+            <div class="stat-icon">
+                <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <h2 class="mb-2">@Model.TotalTeachers</h2>
+            <h6 class="text-uppercase text-muted mb-0">Teachers</h6>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-plus text-success me-1"></i>
+                3 new this month
+            </small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-warning">
+            <div class="stat-icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h2 class="mb-2">@Model.TotalStudents</h2>
+            <h6 class="text-uppercase text-muted mb-0">Students</h6>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-arrow-up text-success me-1"></i>
+                15% growth
+            </small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-info">
+            <div class="stat-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h2 class="mb-2">@Model.TotalCourses</h2>
+            <h6 class="text-uppercase text-muted mb-0">Courses</h6>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-book me-1"></i>
+                @Model.TotalSubjects subjects
+            </small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-lg-8 mb-4">
+        <div class="content-card">
+            <h5 class="mb-3">Quick Actions</h5>
+            <div class="quick-actions">
+                <a asp-controller="Admin" asp-action="AddTeacher" class="quick-action-btn">
+                    <i class="fas fa-user-plus"></i>
+                    <h6>Add Teacher</h6>
+                    <small>Add new teacher account</small>
+                </a>
+                <a asp-controller="Admin" asp-action="Users" class="quick-action-btn">
+                    <i class="fas fa-users-cog"></i>
+                    <h6>Manage Users</h6>
+                    <small>View all users</small>
+                </a>
+                <a asp-controller="Admin" asp-action="Courses" class="quick-action-btn">
+                    <i class="fas fa-book"></i>
+                    <h6>View Courses</h6>
+                    <small>Browse all courses</small>
+                </a>
+                <a asp-controller="Admin" asp-action="Settings" class="quick-action-btn">
+                    <i class="fas fa-cog"></i>
+                    <h6>Settings</h6>
+                    <small>System configuration</small>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="content-card mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Recent Users</h5>
+                <a asp-controller="Admin" asp-action="Users" class="btn btn-sm btn-outline-primary">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentUsers != null && Model.RecentUsers.Any())
+                        {
+                            @foreach (var user in Model.RecentUsers)
+                            {
+                                var isActive = !user.LockoutEnabled || user.LockoutEnd < DateTime.Now;
+                                <tr>
+                                    <td>
+                                        <strong>@user.FullName</strong>
+                                    </td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        @if (user.IsTeacher)
+                                        {
+                                            <span class="badge-teacher">Teacher</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-student">Student</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (isActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Admin" asp-action="EditUser" asp-route-id="@user.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-users fa-2x mb-2"></i>
+                                    <p>No users found</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Stats & Charts -->
+    <div class="col-lg-4">
+        <!-- System Overview -->
+        <div class="content-card mb-4">
+            <h5 class="mb-3">System Overview</h5>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Total Lessons</small>
+                <h4>@Model.TotalLessons</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Total Subjects</small>
+                <h4>@Model.TotalSubjects</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Users by Role</small>
+                <canvas id="usersByRoleChart" height="150"></canvas>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="content-card">
+            <h5 class="mb-3">Quick Stats</h5>
+
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <small class="text-muted d-block">Active Today</small>
+                    <h4>24</h4>
+                </div>
+                <div class="col-6 mb-3">
+                    <small class="text-muted d-block">This Week</small>
+                    <h4>156</h4>
+                </div>
+                <div class="col-6 mb-3">
+                    <small class="text-muted d-block">This Month</small>
+                    <h4>624</h4>
+                </div>
+                <div class="col-6 mb-3">
+                    <small class="text-muted d-block">Total Visits</small>
+                    <h4>2,458</h4>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+                <a asp-controller="Admin" asp-action="Statistics" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-chart-bar me-1"></i> View Detailed Statistics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Users by role chart
+        $(document).ready(function () {
+            const ctx = document.getElementById('usersByRoleChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Students', 'Teachers', 'Admins'],
+                    datasets: [{
+                        data: [@Model.TotalStudents, @Model.TotalTeachers, 1], // Admins count as 1
+                        backgroundColor: [
+                            '#9b59b6',
+                            '#3498db',
+                            '#1abc9c'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        });
+    </script>
+}

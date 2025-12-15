@@ -1,0 +1,131 @@
+﻿<!-- Views/Student/BrowseCourses.cshtml -->
+@model IEnumerable<Web_Lessons.Models.Course>
+
+<div class="row">
+    <!-- Filters Sidebar -->
+    <div class="col-md-3 mb-4">
+        <div class="content-card">
+            <h5 class="mb-3">Filters</h5>
+
+            <form method="get" asp-action="BrowseCourses">
+                <!-- Search -->
+                <div class="mb-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" class="form-control" value="@ViewBag.Search"
+                           placeholder="Search courses..." />
+                </div>
+
+                <!-- Level Filter -->
+                <div class="mb-3">
+                    <label class="form-label">Level</label>
+                    <select name="level" class="form-select">
+                        <option value="">All Levels</option>
+                        @foreach (var level in ViewBag.Levels as List<string>)
+                        {
+                            <option value="@level" selected="@(level == ViewBag.Level)">@level</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Subject Filter -->
+                <div class="mb-3">
+                    <label class="form-label">Subject</label>
+                    <select name="subjectId" class="form-select">
+                        <option value="">All Subjects</option>
+                        @if (ViewBag.Subjects != null)
+                        {
+                            foreach (var subject in ViewBag.Subjects as List<Web_Lessons.Models.Subject>)
+                            {
+                                <option value="@subject.Id" selected="@(subject.Id == ViewBag.SubjectId)">
+                                    @subject.Name
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>Apply Filters
+                    </button>
+                    <a asp-action="BrowseCourses" class="btn btn-outline-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Courses List -->
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4>Available Courses (@Model.Count())</h4>
+            @if (!string.IsNullOrEmpty(ViewBag.Search) || !string.IsNullOrEmpty(ViewBag.Level) || ViewBag.SubjectId != null)
+            {
+                <small class="text-muted">Filtered results</small>
+            }
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                No courses found matching your criteria.
+                <a asp-action="BrowseCourses" class="alert-link">Clear filters</a> to see all courses.
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var course in Model)
+                {
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card course-card h-100">
+                            <!-- Course Image -->
+                            <div class="position-relative">
+                                <img src="@(course.ThumbnailUrl ?? "/images/default-course.jpg")"
+                                     alt="@course.Title" class="course-image">
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-info">@course.Level</span>
+                            </div>
+
+                            <div class="card-body">
+                                <h5 class="card-title mb-2">@course.Title</h5>
+
+                                <div class="d-flex align-items-center mb-3">
+                                    @if (course.Subject?.ImageUrl != null)
+                                    {
+                                        <img src="@course.Subject.ImageUrl" alt="@course.Subject.Name"
+                                             class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                    }
+                                    <small class="text-muted">@course.Subject?.Name</small>
+                                    <small class="text-muted ms-auto">
+                                        <i class="fas fa-video me-1"></i>@course.Lessons?.Count lessons
+                                    </small>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(course.Description))
+                                {
+                                    <p class="card-text text-muted small mb-3">@course.Description</p>
+                                }
+
+                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <small class="text-muted">
+                                        <i class="fas fa-users me-1"></i>@course.Enrollments?.Count students
+                                    </small>
+                                    <form asp-controller="Student" asp-action="
+
+
+" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="courseId" value="@course.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-plus me-1"></i>Enroll
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

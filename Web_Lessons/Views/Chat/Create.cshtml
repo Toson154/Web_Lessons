@@ -1,0 +1,146 @@
+﻿@model Web_Lessons.ViewModels.CreateChatViewModel
+@{
+    Layout = "_StudentLayout";
+    ViewData["Title"] = "New Chat";
+}
+
+<div class="main-container">
+    <div class="content-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">
+                    <i class="fas fa-comment-medical me-2 text-primary"></i>
+                    Start New Chat
+                </h1>
+                <p class="text-muted mb-0">Send a message to @ViewBag.TeacherName</p>
+            </div>
+            <a href="/Chat" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Chats
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Teacher Info -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(ViewBag.TeacherProfileImage))
+                            {
+                                <img src="@ViewBag.TeacherProfileImage"
+                                     alt="@ViewBag.TeacherName"
+                                     class="rounded-circle me-3"
+                                     style="width: 60px; height: 60px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3"
+                                     style="width: 60px; height: 60px;">
+                                    <span class="text-white fw-bold" style="font-size: 1.5rem;">
+                                        @ViewBag.TeacherName[0]
+                                    </span>
+                                </div>
+                            }
+                            <div>
+                                <h5 class="mb-1">@ViewBag.TeacherName</h5>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-chalkboard-teacher me-1"></i>Teacher
+                                </p>
+                                @if (ViewBag.CourseTitle != null)
+                                {
+                                    <small class="text-muted">
+                                        <i class="fas fa-book me-1"></i>@ViewBag.CourseTitle
+                                    </small>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Form -->
+                <form asp-action="Create" method="post" id="chatForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="TeacherId" />
+
+                    <div class="mb-4">
+                        <label asp-for="InitialMessage" class="form-label fw-bold">
+                            Your Message
+                        </label>
+                        <textarea asp-for="InitialMessage"
+                                  class="form-control"
+                                  rows="5"
+                                  placeholder="Type your message here..."
+                                  style="resize: none;"></textarea>
+                        <span asp-validation-for="InitialMessage" class="text-danger"></span>
+                        <div class="form-text">
+                            This will be your first message to start the conversation.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-paper-plane me-2"></i>Send Message
+                        </button>
+                        <a href="/Chat" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#chatForm').submit(function (e) {
+                e.preventDefault();
+
+                const btn = $('#submitBtn');
+                btn.prop('disabled', true).html(`
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            Sending...
+                        `);
+
+                const formData = new FormData(this);
+
+                $.ajax({
+                    url: '/Chat/Create',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            showToast('Chat created successfully!', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/Chat/Details/' + response.chatId;
+                            }, 1500);
+                        } else {
+                            showToast(response.message || 'Failed to create chat', 'danger');
+                            btn.prop('disabled', false).html(`
+                                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                                    `);
+                        }
+                    },
+                    error: function (xhr) {
+                        let errorMessage = 'Failed to send message';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMessage = response.message || errorMessage;
+                        } catch (e) { }
+
+                        showToast('Error: ' + errorMessage, 'danger');
+                        btn.prop('disabled', false).html(`
+                                    <i class="fas fa-paper-plane me-2"></i>Send Message
+                                `);
+                    }
+                });
+            });
+
+            // Auto-focus textarea
+            $('#InitialMessage').focus();
+        });
+    </script>
+}

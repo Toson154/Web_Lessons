@@ -1,0 +1,338 @@
+﻿@model IEnumerable<Web_Lessons.Models.Subject>
+@{
+    Layout = "_TeacherLayout";
+    ViewData["Title"] = "My Subjects";
+    ViewData["Description"] = "Manage your teaching subjects";
+}
+
+@section Styles {
+    <style>
+        .empty-state {
+            padding: 40px 0;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+            .content-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+        }
+
+        .modal-content {
+            border-radius: 12px;
+        }
+
+        .modal-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .subject-image-container {
+            position: relative;
+            height: 180px;
+            width: 100%;
+            overflow: hidden;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .subject-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .subject-image-container:hover .subject-image {
+            transform: scale(1.05);
+        }
+
+        .subject-count-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4>My Subjects (@Model.Count())</h4>
+        <p class="text-muted mb-0">Subjects are the main categories for your courses</p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.Any())
+        {
+            <a asp-action="CreateCourse" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Create Course
+            </a>
+        }
+        <a asp-action="CreateSubject" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add New Subject
+        </a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="content-card text-center py-5">
+        <div class="empty-state">
+            <i class="fas fa-book fa-4x text-muted mb-4"></i>
+            <h4>No subjects yet</h4>
+            <p class="text-muted mb-4">
+                Subjects help you organize your courses into categories.
+                Create your first subject to get started.
+            </p>
+            <a asp-action="CreateSubject" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Create First Subject
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="content-card">
+                <h6 class="mb-3">Subjects Overview</h6>
+                <div class="row">
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="display-6 text-primary">@Model.Count()</div>
+                            <small class="text-muted">Total Subjects</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="display-6 text-success">@Model.Sum(s => s.Courses?.Count() ?? 0)</div>
+                            <small class="text-muted">Total Courses</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        @{
+                            var publishedCourses = Model.Sum(s => s.Courses?.Count(c => c.IsPublished) ?? 0);
+                        }
+                        <div class="text-center">
+                            <div class="display-6 text-warning">@publishedCourses</div>
+                            <small class="text-muted">Published Courses</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        @{
+                            var draftCourses = Model.Sum(s => s.Courses?.Count(c => !c.IsPublished) ?? 0);
+                        }
+                        <div class="text-center">
+                            <div class="display-6 text-info">@draftCourses</div>
+                            <small class="text-muted">Draft Courses</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subjects Grid -->
+    <div class="row">
+        @foreach (var subject in Model)
+        {
+            var courseCount = subject.Courses?.Count() ?? 0;
+            var publishedCount = subject.Courses?.Count(c => c.IsPublished) ?? 0;
+            var draftCount = courseCount - publishedCount;
+            var hasCourses = courseCount > 0;
+
+            <div class="col-md-4 mb-4">
+                <div class="content-card h-100">
+                    <!-- Subject Image -->
+                    <div class="subject-image-container mb-3">
+                        <img src="@(subject.ImageUrl ?? "/images/default-subject.jpg")"
+                             alt="@subject.Name"
+                             class="subject-image">
+                        @if (hasCourses)
+                        {
+                            <span class="subject-count-badge">
+                                @courseCount course@(courseCount != 1 ? "s" : "")
+                            </span>
+                        }
+                    </div>
+
+                    <h5 class="mb-2">@subject.Name</h5>
+
+                    @if (!string.IsNullOrEmpty(subject.Description))
+                    {
+                        <p class="text-muted small mb-3">@TruncateString(subject.Description, 100)</p>
+                    }
+
+                    <!-- Course Stats -->
+                    <div class="mb-3">
+                        @if (publishedCount > 0)
+                        {
+                            <span class="badge bg-success me-2 mb-1">
+                                <i class="fas fa-check-circle me-1"></i>@publishedCount Published
+                            </span>
+                        }
+                        @if (draftCount > 0)
+                        {
+                            <span class="badge bg-warning mb-1">
+                                <i class="fas fa-pen me-1"></i>@draftCount Draft
+                            </span>
+                        }
+                        @if (!hasCourses)
+                        {
+                            <span class="badge bg-secondary mb-1">
+                                <i class="fas fa-info-circle me-1"></i>No courses yet
+                            </span>
+                        }
+                    </div>
+
+                    <!-- Subject Actions -->
+                    <div class="action-buttons">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-action="Courses" asp-route-subjectId="@subject.Id"
+                               class="btn btn-outline-primary btn-sm flex-grow-1"
+                               data-bs-toggle="tooltip" title="View all courses in this subject">
+                                <i class="fas fa-eye me-1"></i>View Courses
+                            </a>
+                            <a asp-action="EditSubject" asp-route-id="@subject.Id"
+                               class="btn btn-outline-secondary btn-sm"
+                               data-bs-toggle="tooltip" title="Edit subject details">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button"
+                                    class="btn btn-outline-danger btn-sm btn-delete-subject"
+                                    data-bs-toggle="tooltip" title="Delete subject"
+                                    data-subject-id="@subject.Id"
+                                    data-subject-name="@subject.Name"
+                                    data-course-count="@courseCount">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Delete Subject Modal -->
+    <div class="modal fade" id="deleteSubjectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Subject</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong id="subjectNameToDelete"></strong>?</p>
+                    <p class="text-danger small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        This action cannot be undone. All courses, lessons, and student progress will be deleted.
+                    </p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        This subject contains:
+                        <ul class="mb-0 mt-2">
+                            <li><strong id="courseCountToDelete">0</strong> courses</li>
+                            <li>All associated lessons</li>
+                            <li>All student enrollments and progress</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteSubjectForm" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">Delete Subject</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    // Helper method for truncating strings
+    string TruncateString(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return value.Length <= maxLength ? value : value.Substring(0, maxLength) + "...";
+    }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("Subjects page loaded");
+
+            // Delete subject modal
+            $('.btn-delete-subject').on('click', function () {
+                const subjectId = $(this).data('subject-id');
+                const subjectName = $(this).data('subject-name');
+                const courseCount = $(this).data('course-count') || 0;
+
+                console.log('Delete clicked:', { subjectId, subjectName, courseCount });
+
+                $('#subjectNameToDelete').text(subjectName);
+                $('#courseCountToDelete').text(courseCount);
+
+                // Set the form action with the correct URL
+                const deleteUrl = '@Url.Action("DeleteSubject", "Teacher")' + '?id=' + subjectId;
+                $('#deleteSubjectForm').attr('action', deleteUrl);
+
+                // Show the modal
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteSubjectModal'));
+                deleteModal.show();
+            });
+
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Show toast notifications from TempData
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>
+                            if (typeof showToast === 'function') {
+                    showToast('@Html.Raw(TempData["SuccessMessage"])', 'success');
+                }
+            </text>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <text>
+                            if (typeof showToast === 'function') {
+                    showToast('@Html.Raw(TempData["ErrorMessage"])', 'danger');
+                }
+            </text>
+        }
+                });
+    </script>
+}

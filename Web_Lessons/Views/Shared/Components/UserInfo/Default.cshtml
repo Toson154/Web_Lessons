@@ -1,0 +1,24 @@
+﻿@model Web_Lessons.Components.UserInfoViewModel
+
+@if (Model != null)
+{
+    <div class="d-flex align-items-center">
+        @if (!string.IsNullOrEmpty(Model.ProfileImageUrl) && Model.ProfileImageUrl != "/images/avatar.png")
+        {
+            <img src="@Model.ProfileImageUrl"
+                 alt="@Model.FullName"
+                 class="rounded-circle me-2"
+                 style="width: 40px; height: 40px; object-fit: cover; border: 2px solid white;">
+        }
+        else
+        {
+            <div class="user-avatar me-2">
+                @Model.UserInitial
+            </div>
+        }
+        <div class="d-none d-md-block">
+            <small class="d-block" style="opacity: 0.8;">Welcome</small>
+            <strong style="font-size: 0.9rem;">@Model.FirstName</strong>
+        </div>
+    </div>
+}

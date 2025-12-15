@@ -1,0 +1,184 @@
+﻿@model List<ApplicationUser>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Users Management";
+    ViewData["Description"] = "Manage all system users";
+
+    var userRoles = ViewBag.UserRoles as Dictionary<string, List<string>>;
+    var roles = ViewBag.Roles as List<string>;
+    var selectedRole = ViewBag.SelectedRole as string;
+    var search = ViewBag.Search as string;
+}
+
+<div class="content-card">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">Users Management</h4>
+            <p class="text-muted mb-0">Total: @Model.Count users</p>
+        </div>
+        <div>
+            <a asp-action="AddTeacher" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>Add Teacher
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Users" class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Role</label>
+                    <select name="role" class="form-select">
+                        <option value="">All Roles</option>
+                        @foreach (var role in roles)
+                        {
+                            <option value="@role" selected="@(role == selectedRole)">@role</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" class="form-control" value="@search"
+                           placeholder="Search by name, email..." />
+                </div>
+                <div class="col-md-2 mb-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-responsive">
+        <table class="table table-hover data-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    var isActive = !user.LockoutEnabled || user.LockoutEnd < DateTime.Now;
+                    var userRoleList = userRoles?.ContainsKey(user.Id) == true ? userRoles[user.Id] : new List<string>();
+
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3">
+                                    <div class="avatar-initial bg-primary rounded">
+                                        @(!string.IsNullOrEmpty(user.FullName) ? user.FullName[0] : 'U')
+                                    </div>
+                                </div>
+                                <div>
+                                    <strong>@user.FullName</strong>
+                                    <div class="text-muted small">
+                                        ID: @(user.Id?.Length >= 8 ? user.Id.Substring(0, 8) + "..." : user.Id ?? "N/A")
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@user.Email</td>
+                        <td>
+                            @foreach (var role in userRoleList)
+                            {
+                                if (role == "Admin")
+                                {
+                                    <span class="badge-admin me-1">@role</span>
+                                }
+                                else if (role == "Teacher")
+                                {
+                                    <span class="badge-teacher me-1">@role</span>
+                                }
+                                else if (role == "Student")
+                                {
+                                    <span class="badge-student me-1">@role</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary me-1">@role</span>
+                                }
+                            }
+                        </td>
+                        <td>
+                            @if (isActive)
+                            {
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-ban me-1"></i>Inactive
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            <small>@(user.CreatedOn.ToString("MMM dd, yyyy"))</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="EditUser" asp-route-id="@user.Id"
+                                   class="btn btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                @if (!userRoleList.Contains("Admin"))
+                                {
+                                    <form asp-action="DeleteUser" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-delete" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-outline-secondary" disabled title="Cannot delete admin">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5>No users found</h5>
+            <p class="text-muted">Try changing your filters or add new users</p>
+            <a asp-action="AddTeacher" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>Add New User
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable
+            $('.data-table').DataTable({
+                "order": [[4, 'desc']],
+                "pageLength": 25,
+                "responsive": true
+            });
+        });
+    </script>
+}

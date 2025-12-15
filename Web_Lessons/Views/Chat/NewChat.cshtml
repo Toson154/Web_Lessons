@@ -1,0 +1,327 @@
+﻿@model Web_Lessons.ViewModels.CreateChatViewModel
+@{
+    ViewData["Title"] = "New Chat";
+    Layout = "_StudentLayout";
+}
+
+<div class="main-container">
+    <div class="content-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">
+                    <i class="fas fa-comment-medical me-2 text-primary"></i>
+                    New Chat
+                </h1>
+                <p class="text-muted mb-0">Start a conversation with your teachers</p>
+            </div>
+            <a href="/Chat" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Chats
+            </a>
+        </div>
+
+        <!-- Search Box -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text"
+                           class="form-control border-0"
+                           id="searchTeachers"
+                           placeholder="Search teachers by name or email...">
+                    <button class="btn btn-primary" onclick="searchTeachers()">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teachers List -->
+        <div id="teachersContainer">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading teachers...</p>
+            </div>
+        </div>
+
+        <!-- Chat Modal -->
+        <div class="modal fade" id="startChatModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="teacherName">Start Chat</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="selectedTeacherId">
+                        <div class="mb-3">
+                            <label class="form-label">Initial Message (Optional)</label>
+                            <textarea class="form-control"
+                                      id="initialMessage"
+                                      rows="3"
+                                      placeholder="Hi! I'd like to discuss..."></textarea>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            You can send your first message now or start with a greeting later.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="startChat()">
+                            <i class="fas fa-paper-plane me-2"></i>Start Chat
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .teacher-card {
+            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+            .teacher-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                border-color: #4361ee;
+            }
+
+        .teacher-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #4361ee;
+        }
+
+        .teacher-stats {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .stat-item i {
+                color: #4361ee;
+            }
+
+        .no-teachers {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .no-teachers-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 20px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            // تحميل المدرسين عند فتح الصفحة
+            searchTeachers();
+
+            // البحث عند الضغط Enter
+            $('#searchTeachers').keypress(function (e) {
+                if (e.which === 13) {
+                    searchTeachers();
+                }
+            });
+        });
+
+        function searchTeachers() {
+            const searchTerm = $('#searchTeachers').val().trim();
+            const container = $('#teachersContainer');
+
+            container.html(`
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mt-2 text-muted">Searching teachers...</p>
+                        </div>
+                    `);
+
+            $.ajax({
+                url: '/Student/SearchTeachers',
+                type: 'GET',
+                data: { search: searchTerm },
+                success: function (response) {
+                    if (response.success && response.teachers && response.teachers.length > 0) {
+                        renderTeachers(response.teachers);
+                    } else {
+                        showNoTeachers();
+                    }
+                },
+                error: function () {
+                    container.html(`
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Error loading teachers. Please try again.
+                                    <button class="btn btn-sm btn-outline-danger ms-3" onclick="searchTeachers()">
+                                        Retry
+                                    </button>
+                                </div>
+                            `);
+                }
+            });
+        }
+
+        function renderTeachers(teachers) {
+            let html = '<div class="row g-3">';
+
+            teachers.forEach(teacher => {
+                html += `
+                            <div class="col-md-6">
+                                <div class="teacher-card">
+                                    <div class="p-4">
+                                        <div class="row align-items-center">
+                                            <div class="col-auto">
+                                                <img src="${teacher.ProfileImageUrl}"
+                                                     alt="${teacher.FullName}"
+                                                     class="teacher-avatar"
+                                                     onerror="this.src='/images/default-avatar.png'">
+                                            </div>
+                                            <div class="col">
+                                                <h5 class="mb-1 fw-bold">${escapeHtml(teacher.FullName)}</h5>
+                                                <p class="text-muted small mb-2">
+                                                    <i class="fas fa-envelope me-1"></i>${escapeHtml(teacher.Email)}
+                                                </p>
+                                                ${teacher.Bio ? `<p class="small text-muted mb-3">${escapeHtml(teacher.Bio)}</p>` : ''}
+
+                                                <div class="teacher-stats d-flex gap-3 mb-3">
+                                                    <div class="stat-item">
+                                                        <i class="fas fa-book"></i>
+                                                        <span>${teacher.SubjectCount || 0} subjects</span>
+                                                    </div>
+                                                    <div class="stat-item">
+                                                        <i class="fas fa-graduation-cap"></i>
+                                                        <span>${teacher.CourseCount || 0} courses</span>
+                                                    </div>
+                                                </div>
+
+                                                <button class="btn btn-primary btn-sm"
+                                                        onclick="selectTeacher('${teacher.Id}', '${escapeHtml(teacher.FullName)}')">
+                                                    <i class="fas fa-comment me-1"></i>Start Chat
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+            });
+
+            html += '</div>';
+            $('#teachersContainer').html(html);
+        }
+
+        function showNoTeachers() {
+            $('#teachersContainer').html(`
+                        <div class="no-teachers">
+                            <div class="no-teachers-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <h4 class="text-muted mb-3">No Teachers Found</h4>
+                            <p class="text-muted mb-4">
+                                ${$('#searchTeachers').val().trim() ?
+                    'No teachers match your search. Try a different name or email.' :
+                    'No teachers available at the moment.'}
+                            </p>
+                            <button class="btn btn-outline-primary" onclick="searchTeachers()">
+                                <i class="fas fa-redo me-2"></i>Refresh
+                            </button>
+                        </div>
+                    `);
+        }
+
+        function selectTeacher(teacherId, teacherName) {
+            $('#selectedTeacherId').val(teacherId);
+            $('#teacherName').html(`Start Chat with ${teacherName}`);
+            $('#initialMessage').val('');
+
+            const modal = new bootstrap.Modal(document.getElementById('startChatModal'));
+            modal.show();
+        }
+
+        function startChat() {
+            const teacherId = $('#selectedTeacherId').val();
+            const initialMessage = $('#initialMessage').val().trim();
+            const token = $('input[name="__RequestVerificationToken"]').val();
+
+            if (!teacherId) {
+                showToast('Please select a teacher first', 'warning');
+                return;
+            }
+
+            // إظهار حالة التحميل
+            $('#startChatModal .btn-primary').html(`
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        Creating...
+                    `).prop('disabled', true);
+
+            $.ajax({
+                url: '/Student/CreateChatWithTeacher',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': token
+                },
+                data: {
+                    teacherId: teacherId,
+                    initialMessage: initialMessage
+                },
+                success: function (response) {
+                    if (response.success) {
+                        // إغلاق المودال
+                        bootstrap.Modal.getInstance(document.getElementById('startChatModal')).hide();
+
+                        // إظهار رسالة نجاح
+                        showToast(response.message || 'Chat created successfully', 'success');
+
+                        // التوجيه إلى المحادثة الجديدة
+                        setTimeout(() => {
+                            if (response.redirect) {
+                                window.location.href = response.redirect;
+                            } else if (response.chatId) {
+                                window.location.href = '/Chat/Details/' + response.chatId;
+                            } else {
+                                window.location.href = '/Chat';
+                            }
+                        }, 1000);
+                    } else {
+                        showToast(response.message || 'Failed to create chat', 'danger');
+                        $('#startChatModal .btn-primary').html('<i class="fas fa-paper-plane me-2"></i>Start Chat').prop('disabled', false);
+                    }
+                },
+                error: function () {
+                    showToast('Error creating chat. Please try again.', 'danger');
+                    $('#startChatModal .btn-primary').html('<i class="fas fa-paper-plane me-2"></i>Start Chat').prop('disabled', false);
+                }
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+}

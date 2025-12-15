@@ -1,0 +1,294 @@
+﻿@model Web_Lessons.ViewModels.StudentCourseDetailsViewModel
+@{
+    Layout = "_StudentLayout";
+
+    // التحقق من Null قبل الاستخدام
+    var course = Model?.Course ?? new Web_Lessons.Models.Course();
+    var lessons = Model?.Lessons ?? new List<Web_Lessons.Models.Lesson>();
+    var subject = course?.Subject ?? new Web_Lessons.Models.Subject();
+
+    ViewData["Title"] = !string.IsNullOrEmpty(course?.Title) ? course.Title : "Course Details";
+    ViewData["Description"] = course?.Description;
+
+    // دالة مساعدة للتحقق من الصور
+    string GetImageUrl(string url)
+    {
+        return string.IsNullOrEmpty(url) ? "/images/default-avatar.png" : url;
+    }
+
+    string GetSubjectName()
+    {
+        return !string.IsNullOrEmpty(subject?.Name) ? subject.Name : "No Subject";
+    }
+}
+
+<div class="row">
+    <!-- Course Header -->
+    <div class="col-md-12 mb-4">
+        <div class="content-card">
+            <div class="row">
+                <div class="col-md-8">
+                    <h3 class="mb-2">@course?.Title</h3>
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-book me-1"></i>@GetSubjectName() •
+                        <i class="fas fa-signal me-1"></i>@(course?.Level ?? "Not Specified") •
+                        <i class="fas fa-users me-1"></i>@Model?.TotalStudents students
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(course?.Description))
+                    {
+                        <p class="mb-3">@course.Description</p>
+                    }
+                    else
+                    {
+                        <p class="mb-3 text-muted">No description available.</p>
+                    }
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="display-4 fw-bold text-primary">@Model?.ProgressPercentage%</div>
+                    <small class="text-muted">Your Progress</small>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-primary" style="width: @(Model?.ProgressPercentage ?? 0)%"></div>
+                    </div>
+                    <small>@Model?.CompletedLessons/@Model?.TotalLessons lessons completed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Course Lessons -->
+    <div class="col-md-8">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">Course Lessons (@lessons.Count)</h5>
+                <div class="badge bg-primary">
+                    <i class="fas fa-video me-1"></i>@lessons.Count total
+                </div>
+            </div>
+
+            @if (!lessons.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No lessons available yet. Check back soon!
+                </div>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var lesson in lessons.OrderBy(l => l.Order))
+                    {
+                        var isCompleted = Model?.LessonCompletionStatus != null &&
+                        Model.LessonCompletionStatus.ContainsKey(lesson.Id)
+                        ? Model.LessonCompletionStatus[lesson.Id]
+                        : false;
+
+                        <a asp-controller="Student" asp-action="LessonDetails" asp-route-id="@lesson.Id"
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">
+                                        @if (isCompleted)
+                                        {
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-play-circle text-primary me-2"></i>
+                                        }
+                                        @lesson.Title
+                                    </h6>
+                                    @if (!string.IsNullOrEmpty(lesson.Description))
+                                    {
+                                        <p class="mb-1 text-muted small">@lesson.Description</p>
+                                    }
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted d-block mb-1">
+                                        <i class="fas fa-clock me-1"></i>@lesson.DurationMinutes min
+                                    </small>
+                                    <span class="badge @(isCompleted ? "bg-success" : "bg-secondary")">
+                                        @(isCompleted ? "Completed" : "Not Started")
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Recent Comments -->
+        @if (Model?.RecentComments != null && Model.RecentComments.Any())
+        {
+            <div class="content-card mt-4">
+                <h5 class="mb-3">Recent Discussions</h5>
+                <div class="list-group">
+                    @foreach (var comment in Model.RecentComments)
+                    {
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    <img src="@GetImageUrl(comment.UserProfileImage)" alt="@comment.UserName"
+                                         class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">@comment.UserName</h6>
+                                        <small class="text-muted">@comment.TimeAgo</small>
+                                    </div>
+                                    <p class="mb-1">@comment.Content</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-book me-1"></i>@comment.LessonTitle
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="mt-3 text-center">
+                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-primary">
+                        View All Discussions
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Course Stats & Actions -->
+    <div class="col-md-4">
+        <div class="content-card">
+            <h5 class="mb-3">Course Statistics</h5>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Total Lessons</small>
+                <h4>@lessons.Count</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Your Progress</small>
+                <h4>@Model?.ProgressPercentage%</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Completed Lessons</small>
+                <h4>@Model?.CompletedLessons</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Remaining Lessons</small>
+                <h4>@(lessons.Count - (Model?.CompletedLessons ?? 0))</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Time Spent</small>
+                <h4>@(Model?.TimeSpentHours ?? 0) hours</h4>
+            </div>
+
+            <hr>
+
+            <!-- Course Actions -->
+            <div class="d-grid gap-2">
+                @if (lessons.Any())
+                {
+                    var firstLesson = lessons.OrderBy(l => l.Order).First();
+                    <a asp-controller="Student" asp-action="LessonDetails" asp-route-id="@firstLesson.Id"
+                       class="btn btn-primary">
+                        <i class="fas fa-play me-1"></i>Start First Lesson
+                    </a>
+                }
+
+                @if (Model?.CanAccessChat == true && course?.Subject?.TeacherId != null)
+                {
+                    <a asp-controller="Chat" asp-action="Create"
+                   asp-route-teacherId="@course.Subject.TeacherId"
+                       class="btn btn-outline-info">
+                        <i class="fas fa-comments me-1"></i>Chat with Teacher
+                    </a>
+                }
+
+                <a asp-controller="Student" asp-action="BrowseCourses" class="btn btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i>Browse More Courses
+                </a>
+
+                <a asp-controller="Student" asp-action="MyProgress" class="btn btn-outline-secondary">
+                    <i class="fas fa-chart-line me-1"></i>View All Progress
+                </a>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        @if (lessons.Any())
+        {
+            <div class="content-card mt-4">
+                <h5 class="mb-3">Quick Navigation</h5>
+                <div class="d-grid gap-2">
+                    @{
+                        var firstLesson = lessons.OrderBy(l => l.Order).First();
+                        var lastLesson = lessons.OrderBy(l => l.Order).Last();
+                    }
+
+                    <a asp-controller="Student" asp-action="LessonDetails" asp-route-id="@firstLesson.Id"
+                       class="btn btn-outline-primary">
+                        <i class="fas fa-play me-1"></i>Start Course
+                    </a>
+
+                    <a asp-controller="Student" asp-action="LessonDetails" asp-route-id="@lastLesson.Id"
+                       class="btn btn-outline-success">
+                        <i class="fas fa-forward me-1"></i>Last Lesson
+                    </a>
+
+                    <a asp-controller="Student" asp-action="MyCourses" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to My Courses
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Debug Information (Remove in production) -->
+@if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
+{
+    <div class="mt-4">
+        <div class="alert alert-warning">
+            <h6>Debug Information:</h6>
+            <pre>
+    Course ID: @ViewContext.RouteData.Values["id"]
+    Student ID: @User.Identity?.Name
+    Model is null: @(Model == null)
+    Course is null: @(course == null)
+    Lessons count: @lessons.Count
+    Progress: @Model?.ProgressPercentage%
+                </pre>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("CourseDetails page loaded for course ID: @ViewContext.RouteData.Values["id"]");
+
+            // إضافة تأثيرات للدروس
+            $('.list-group-item').hover(
+                function () {
+                    $(this).addClass('shadow-sm');
+                },
+                function () {
+                    $(this).removeClass('shadow-sm');
+                }
+            );
+
+            // تحديث شريط التقدم تلقائياً
+            function updateProgressBar() {
+                var progress = @Model?.ProgressPercentage ?? 0;
+                $('.progress-bar').css('width', progress + '%').text(progress + '%');
+            }
+
+            updateProgressBar();
+        });
+    </script>
+}

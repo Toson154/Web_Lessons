@@ -1,0 +1,412 @@
+﻿@model IEnumerable<Web_Lessons.Models.Course>
+@{
+    Layout = "_TeacherLayout";
+    ViewData["Title"] = "My Courses";
+    ViewData["Description"] = "Manage your teaching courses";
+
+    var subjectId = ViewBag.SubjectId as int?;
+    var subjectName = ViewBag.SubjectName as string;
+    var subjects = ViewBag.Subjects as List<Web_Lessons.Models.Subject> ?? new List<Web_Lessons.Models.Subject>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4>My Courses (@Model.Count())</h4>
+        @if (!string.IsNullOrEmpty(subjectName))
+        {
+            <p class="text-muted mb-0">Filtered by: <strong>@subjectName</strong></p>
+        }
+    </div>
+    <div class="d-flex gap-2">
+        <!-- Subject Filter Dropdown -->
+        @if (subjects.Any())
+        {
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter me-1"></i>
+                    @if (subjectId.HasValue)
+                    {
+                        @subjects.FirstOrDefault(s => s.Id == subjectId)?.Name
+                    }
+                    else
+                    {
+                        <span>All Subjects</span>
+                    }
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" asp-action="Courses">All Subjects</a></li>
+                    @foreach (var subject in subjects)
+                    {
+                        <li>
+                            <a class="dropdown-item @(subjectId == subject.Id ? "active" : "")"
+                               asp-action="Courses" asp-route-subjectId="@subject.Id">
+                                @subject.Name
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <!-- Create Course Button -->
+        @if (subjects.Any())
+        {
+            @if (subjectId.HasValue)
+            {
+                <a asp-action="CreateCourse" asp-route-subjectId="@subjectId" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Course to This Subject
+                </a>
+            }
+            else
+            {
+                <a asp-action="CreateCourse" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add New Course
+                </a>
+            }
+        }
+        else
+        {
+            <a asp-action="CreateSubject" class="btn btn-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>Create Subject First
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Subject Stats -->
+@if (subjects.Any() && !subjectId.HasValue)
+{
+    <div class="row mb-4">
+        @foreach (var subject in subjects.Take(3))
+        {
+            <div class="col-md-4">
+                <div class="content-card h-100">
+                    <div class="d-flex align-items-center mb-2">
+                        <h6 class="mb-0 flex-grow-1">@subject.Name</h6>
+                        <span class="badge bg-primary">@subject.Courses?.Count() courses</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(subject.Description))
+                    {
+                        <p class="text-muted small mb-3">@TruncateString(subject.Description, 100)</p>
+                    }
+                    <a asp-action="Courses" asp-route-subjectId="@subject.Id" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="fas fa-eye me-1"></i>View Courses
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="content-card text-center py-5">
+        <div class="empty-state">
+            <i class="fas fa-graduation-cap fa-4x text-muted mb-4"></i>
+            <h4>No courses found</h4>
+            <p class="text-muted mb-4">
+                @if (subjectId.HasValue)
+                {
+                    <span>This subject doesn't have any courses yet.</span>
+                }
+                else if (subjects.Any())
+                {
+                    <span>You haven't created any courses yet.</span>
+                }
+                else
+                {
+                    <span>You need to create a subject first before creating courses.</span>
+                }
+            </p>
+            <div class="d-flex justify-content-center gap-2">
+                @if (subjects.Any())
+                {
+                    @if (subjectId.HasValue)
+                    {
+                        <a asp-action="CreateCourse" asp-route-subjectId="@subjectId" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create First Course
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-action="CreateCourse" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create First Course
+                        </a>
+                    }
+                    <a asp-action="Subjects" class="btn btn-outline-secondary">
+                        <i class="fas fa-book me-2"></i>View Subjects
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="CreateSubject" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create First Subject
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="content-card">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Subject</th>
+                        <th>Level</th>
+                        <th>Status</th>
+                        <th>Lessons</th>
+                        <th>Students</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var course in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(course.ThumbnailUrl))
+                                    {
+                                        <img src="@course.ThumbnailUrl"
+                                             alt="@course.Title"
+                                             class="rounded me-3"
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                    }
+                                    <div>
+                                        <strong>@course.Title</strong>
+                                        @if (!string.IsNullOrEmpty(course.Description))
+                                        {
+                                            <div class="text-muted small">@TruncateString(course.Description, 60)</div>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <a asp-action="Courses" asp-route-subjectId="@course.SubjectId"
+                                   class="text-decoration-none">
+                                    @course.Subject?.Name
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-@GetLevelBadgeClass(course.Level)">@course.Level</span>
+                            </td>
+                            <td>
+                                @if (course.IsPublished)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>Published
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-pen me-1"></i>Draft
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-info">
+                                    <i class="fas fa-video me-1"></i>@course.Lessons?.Count()
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-users me-1"></i>@course.Enrollments?.Count()
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Lessons" asp-route-courseId="@course.Id"
+                                       class="btn btn-outline-primary" title="View Lessons">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-action="CreateLesson" asp-route-courseId="@course.Id"
+                                       class="btn btn-outline-success" title="Add Lesson">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                    <a asp-action="EditCourse" asp-route-id="@course.Id"
+                                       class="btn btn-outline-secondary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-delete-course"
+                                            title="Delete"
+                                            data-course-id="@course.Id"
+                                            data-course-title="@course.Title">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Delete Course Modal -->
+    <div class="modal fade" id="deleteCourseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong id="courseTitleToDelete"></strong>?</p>
+                    <p class="text-danger small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        This action cannot be undone. All lessons and student progress will be deleted.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteCourseForm" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">Delete Course</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    string GetLevelBadgeClass(string level)
+    {
+        return level?.ToLower() switch
+        {
+            "beginner" => "success",
+            "intermediate" => "warning",
+            "advanced" => "danger",
+            _ => "secondary"
+        };
+    }
+
+    // Helper method for truncating strings
+    string TruncateString(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return value.Length <= maxLength ? value : value.Substring(0, maxLength) + "...";
+    }
+}
+
+@section Styles {
+    <style>
+        .empty-state {
+            padding: 40px 0;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        
+        .table th {
+            border-top: none;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            background-color: #f8f9fa;
+        }
+        
+        .table td {
+            vertical-align: middle;
+            padding: 1rem 0.75rem;
+        }
+        
+        .btn-group-sm > .btn {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .dropdown-item.active {
+            background-color: #4361ee;
+            color: white;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Delete course modal
+            $('.btn-delete-course').on('click', function () {
+                const courseId = $(this).data('course-id');
+                const courseTitle = $(this).data('course-title');
+                
+                $('#courseTitleToDelete').text(courseTitle);
+                $('#deleteCourseForm').attr('action', '@Url.Action("DeleteCourse")?id=' + courseId);
+                
+                const modal = new bootstrap.Modal(document.getElementById('deleteCourseModal'));
+                modal.show();
+            });
+            
+            // Initialize tooltips
+            $('[title]').tooltip({
+                placement: 'top',
+                trigger: 'hover'
+            });
+            
+            // Show toast notifications
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>showToast('@TempData["SuccessMessage"]', 'success');</text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>showToast('@TempData["ErrorMessage"]', 'error');</text>
+            }
+        });
+        
+        function showToast(message, type = 'info', duration = 5000) {
+            const icon = {
+                'success': 'check-circle',
+                'error': 'exclamation-circle',
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            }[type] || 'info-circle';
+            
+            const toast = $(`
+                <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas fa-${icon} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            
+            // Create toast container if doesn't exist
+            if ($('.toast-container').length === 0) {
+                $('body').append('<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>');
+            }
+            
+            $('.toast-container').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0], {
+                autohide: true,
+                delay: duration
+            });
+            bsToast.show();
+            
+            // Remove after hide
+            toast.on('hidden.bs.toast', function () {
+                $(this).remove();
+            });
+        }
+    </script>
+}

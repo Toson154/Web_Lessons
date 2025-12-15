@@ -1,0 +1,84 @@
+﻿@model Web_Lessons.ViewModels.EditSubjectViewModel
+@{
+    ViewData["Title"] = "Edit Subject";
+    Layout = "_TeacherLayout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="content-card">
+            <h4 class="mb-4">Edit Subject</h4>
+
+            <form asp-action="EditSubject" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <!-- Subject Image Preview -->
+                <div class="text-center mb-4">
+                    <div class="image-upload-area border rounded p-4">
+                        <img id="subjectImagePreview"
+                             src="@(!string.IsNullOrEmpty(Model.ExistingImageUrl) ? Model.ExistingImageUrl : "/images/default-subject.jpg")"
+                             alt="Subject Image Preview" class="subject-image-preview mb-3">
+
+                        <label for="ImageFile" class="btn btn-outline-primary">
+                            <i class="fas fa-upload me-2"></i>Change Subject Image
+                        </label>
+                        <input asp-for="ImageFile" type="file" class="d-none"
+                               id="ImageFile" accept="image/*" data-preview="subjectImagePreview">
+
+                        @if (!string.IsNullOrEmpty(Model.ExistingImageUrl))
+                        {
+                            <div class="mt-2">
+                                <small class="text-muted">Current image will be replaced if you upload a new one</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">Subject Name *</label>
+                    <input asp-for="Name" class="form-control" placeholder="e.g., Mathematics, Physics" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Description" class="form-label">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="4"
+                              placeholder="Describe what students will learn in this subject..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Subjects" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Subjects
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Subject
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Image preview
+            $('#ImageFile').on('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#subjectImagePreview').attr('src', e.target.result);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    </script>
+}

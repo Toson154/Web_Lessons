@@ -1,0 +1,268 @@
+﻿<!-- في Views/Shared/_NewChatModal.cshtml -->
+<div class="modal fade" id="newChatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Start New Chat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Search Teachers -->
+                <div class="mb-3">
+                    <label class="form-label">Search Teachers</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="teacherSearch"
+                               placeholder="Type teacher name or email...">
+                        <button class="btn btn-outline-primary" type="button" id="searchTeachersBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Teachers List -->
+                <div id="teachersList" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Initial Message -->
+                <div class="mb-3">
+                    <label class="form-label">Initial Message (Optional)</label>
+                    <textarea class="form-control" id="initialMessage" rows="3"
+                              placeholder="Type your first message..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="startChatBtn" disabled>
+                    <i class="fas fa-comments me-1"></i>Start Chat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .teacher-card {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+
+        .teacher-card:hover {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+
+        .teacher-card.selected {
+            background-color: #e8f4ff;
+            border-color: #3498db;
+        }
+
+    .teacher-avatar {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .teacher-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .teacher-stats {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .no-teachers {
+        text-align: center;
+        padding: 30px;
+        color: #6c757d;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        let selectedTeacherId = null;
+
+        // Load teachers when modal opens
+        $('#newChatModal').on('shown.bs.modal', function () {
+            loadTeachers();
+        });
+
+        // Reset when modal closes
+        $('#newChatModal').on('hidden.bs.modal', function () {
+            selectedTeacherId = null;
+            $('#teachersList').html(loadingSpinner());
+            $('#initialMessage').val('');
+            $('#teacherSearch').val('');
+            $('#startChatBtn').prop('disabled', true);
+        });
+
+        // Search teachers
+        $('#searchTeachersBtn').click(function () {
+            const searchTerm = $('#teacherSearch').val();
+            loadTeachers(searchTerm);
+        });
+
+        $('#teacherSearch').on('keyup', function (e) {
+            if (e.key === 'Enter') {
+                loadTeachers($(this).val());
+            }
+        });
+
+        function loadTeachers(searchTerm = '') {
+            const teachersList = $('#teachersList');
+            teachersList.html(loadingSpinner());
+
+            $.ajax({
+                url: '/Student/GetAvailableTeachers',
+                type: 'GET',
+                data: { search: searchTerm },
+                success: function (response) {
+                    if (response.success && response.teachers.length > 0) {
+                        renderTeachers(response.teachers);
+                    } else {
+                        teachersList.html(`
+                                <div class="no-teachers">
+                                    <i class="fas fa-user-tie fa-3x mb-3"></i>
+                                    <p>No teachers found</p>
+                                    ${!searchTerm ? '<p class="small">Try searching by name or email</p>' : ''}
+                                </div>
+                            `);
+                    }
+                },
+                error: function () {
+                    teachersList.html(`
+                            <div class="alert alert-danger">
+                                Error loading teachers. Please try again.
+                            </div>
+                        `);
+                }
+            });
+        }
+
+        function renderTeachers(teachers) {
+            const teachersList = $('#teachersList');
+            let html = '<div class="list-group">';
+
+            teachers.forEach(teacher => {
+                html += `
+                        <div class="list-group-item teacher-card" data-teacher-id="${teacher.id}">
+                            <div class="teacher-info">
+                                <img src="${teacher.profileImageUrl || '/images/avatar.png'}"
+                                     alt="${teacher.name}"
+                                     class="teacher-avatar">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">${teacher.name}</h6>
+                                    <p class="text-muted mb-1 small">${teacher.email}</p>
+                                    <div class="teacher-stats">
+                                        <span class="me-3">
+                                            <i class="fas fa-users me-1"></i>${teacher.studentCount || 0} students
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-book me-1"></i>${teacher.courseCount || 0} courses
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">Click to select</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            });
+
+            html += '</div>';
+            teachersList.html(html);
+
+            // Add click handler for teacher selection
+            $('.teacher-card').click(function () {
+                $('.teacher-card').removeClass('selected');
+                $(this).addClass('selected');
+                selectedTeacherId = $(this).data('teacher-id');
+                $('#startChatBtn').prop('disabled', false);
+            });
+        }
+
+        // Start new chat
+        $('#startChatBtn').click(function () {
+            if (!selectedTeacherId) {
+                showToast('Please select a teacher', 'warning');
+                return;
+            }
+
+            const initialMessage = $('#initialMessage').val();
+            const btn = $(this);
+
+            btn.prop('disabled', true);
+            btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Creating...');
+
+            $.ajax({
+                url: '/Student/StartNewChat',
+                type: 'POST',
+                data: {
+                    teacherId: selectedTeacherId,
+                    initialMessage: initialMessage,
+                    __RequestVerificationToken: getAntiForgeryToken()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#newChatModal').modal('hide');
+                        showToast('Chat started successfully!', 'success');
+
+                        // Reload chat list or open the new chat
+                        if (typeof loadChatList === 'function') {
+                            loadChatList();
+                        }
+
+                        if (response.chatId) {
+                            setTimeout(() => {
+                                if (typeof loadChatWindow === 'function') {
+                                    loadChatWindow(response.chatId);
+                                }
+                            }, 500);
+                        }
+                    } else {
+                        showToast(response.message || 'Error starting chat', 'danger');
+                    }
+                },
+                error: function () {
+                    showToast('Error starting chat', 'danger');
+                },
+                complete: function () {
+                    btn.prop('disabled', false);
+                    btn.html('<i class="fas fa-comments me-1"></i>Start Chat');
+                }
+            });
+        });
+
+        function loadingSpinner() {
+            return `
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2 small">Loading teachers...</p>
+                    </div>
+                `;
+        }
+
+        function getAntiForgeryToken() {
+            return $('input[name="__RequestVerificationToken"]').val();
+        }
+
+        function showToast(message, type = 'info') {
+            // Implementation from previous code
+        }
+    });
+</script>

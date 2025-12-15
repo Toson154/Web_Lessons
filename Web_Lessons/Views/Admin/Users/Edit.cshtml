@@ -1,0 +1,217 @@
+﻿@model Web_Lessons.ViewModels.EditUserViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Edit User";
+    ViewData["Description"] = "Update user information and permissions";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>Edit User: @Model.FullName</h4>
+                <a asp-action="Users" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Users
+                </a>
+            </div>
+
+            <form asp-action="EditUser" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Basic Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FullName" class="form-label">Full Name *</label>
+                                <input asp-for="FullName" class="form-control" />
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label">Email Address *</label>
+                                <input asp-for="Email" class="form-control" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Account Status</label>
+                            <div class="form-check">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" id="isActive" />
+                                <label class="form-check-label" for="isActive">
+                                    @(Model.IsActive ? "Account is active" : "Account is inactive")
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Inactive accounts cannot log in to the system
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Management -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Roles & Permissions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Assign Roles</label>
+                            <div class="row">
+                                @{
+                                    // حل المشكلة: نعرف availableRoles هنا في الـ View
+                                    var availableRoles = new List<string> { "Admin", "Teacher", "Student" };
+                                }
+                                @foreach (var role in availableRoles)
+                                {
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   name="SelectedRoles"
+                                                   value="@role"
+                                                   id="role_@role"
+                                            @(Model.SelectedRoles?.Contains(role) == true ? "checked" : "") />
+                                            <label class="form-check-label" for="role_@role">
+                                                @if (role == "Admin")
+                                                {
+                                                    <span class="badge bg-danger">@role</span>
+                                                }
+                                                else if (role == "Teacher")
+                                                {
+                                                    <span class="badge bg-success">@role</span>
+                                                }
+                                                else if (role == "Student")
+                                                {
+                                                    <span class="badge bg-primary">@role</span>
+                                                }
+                                                else
+                                                {
+                                                    @role
+                                                }
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <small class="form-text text-muted">
+                                Select one or more roles for this user. Admins have full system access.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0">Danger Zone</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> These actions are irreversible. Proceed with caution.
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Reset Password</h6>
+                                <p class="text-muted small mb-0">Send password reset email to user</p>
+                            </div>
+                            <button type="button" class="btn btn-outline-warning" id="resetPasswordBtn">
+                                <i class="fas fa-key me-1"></i>Reset Password
+                            </button>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 text-danger">Delete Account</h6>
+                                <p class="text-muted small mb-0">Permanently delete this user account</p>
+                            </div>
+                            <button type="button" class="btn btn-outline-danger" id="deleteAccountBtn">
+                                <i class="fas fa-trash me-1"></i>Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Users" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Reset password button
+            $('#resetPasswordBtn').on('click', function () {
+                if (confirm('Send password reset email to this user?')) {
+                    $.ajax({
+                        url: '/Admin/ResetPassword',
+                        type: 'POST',
+                        data: { userId: '@Model.Id' },
+                        success: function (response) {
+                            if (response.success) {
+                                alert('Password reset email sent successfully!');
+                            } else {
+                                alert('Error sending password reset email.');
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Delete account button
+            $('#deleteAccountBtn').on('click', function () {
+                if (confirm('WARNING: This will permanently delete the user account. This action cannot be undone.\n\nAre you sure you want to proceed?')) {
+                    $.ajax({
+                        url: '/Admin/DeleteUser',
+                        type: 'POST',
+                        data: {
+                            id: '@Model.Id',
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                window.location.href = '/Admin/Users';
+                            } else {
+                                alert('Error deleting user account.');
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Role selection validation
+            $('form').on('submit', function (e) {
+                const selectedRoles = $('input[name="SelectedRoles"]:checked').length;
+                if (selectedRoles === 0) {
+                    e.preventDefault();
+                    alert('Please select at least one role for the user.');
+                    return false;
+                }
+            });
+        });
+    </script>
+}

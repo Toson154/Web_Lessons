@@ -1,0 +1,518 @@
+﻿@{
+    var userName = User.Identity?.Name;
+    var userInitials = !string.IsNullOrEmpty(userName) ? userName.Substring(0, 1).ToUpper() : "T";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Teacher Panel</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Custom Teacher Styles -->
+    <style>
+        :root {
+            --teacher-primary: #2c3e50;
+            --teacher-secondary: #3498db;
+            --teacher-accent: #e74c3c;
+            --teacher-light: #ecf0f1;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Sidebar */
+        .teacher-sidebar {
+            background: linear-gradient(180deg, var(--teacher-primary) 0%, #1a252f 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 0;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 250px;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .teacher-main {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* User Info */
+        .user-info {
+            padding: 2rem 1rem;
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-avatar {
+            width: 70px;
+            height: 70px;
+            background: var(--teacher-secondary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            margin: 0 auto 1rem;
+            border: 3px solid rgba(255,255,255,0.2);
+        }
+
+        /* Navigation */
+        .teacher-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            margin-bottom: 0.2rem;
+        }
+
+        .nav-link {
+            color: #bdc3c7;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+            .nav-link:hover {
+                color: white;
+                background: rgba(255,255,255,0.05);
+                text-decoration: none;
+            }
+
+            .nav-link.active {
+                color: white;
+                background: rgba(52, 152, 219, 0.2);
+                border-left-color: var(--teacher-secondary);
+            }
+
+            .nav-link i {
+                width: 24px;
+                margin-right: 10px;
+                text-align: center;
+            }
+
+        /* Main Content */
+        .content-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+            border-top: 4px solid;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+            }
+
+            .stat-card.stat-primary {
+                border-color: #3498db;
+            }
+
+            .stat-card.stat-success {
+                border-color: #2ecc71;
+            }
+
+            .stat-card.stat-warning {
+                border-color: #f39c12;
+            }
+
+            .stat-card.stat-danger {
+                border-color: #e74c3c;
+            }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .teacher-sidebar {
+                position: relative;
+                width: 100%;
+                min-height: auto;
+            }
+
+            .teacher-main {
+                margin-left: 0;
+            }
+
+            .user-info {
+                padding: 1rem;
+            }
+
+            .nav-link {
+                padding: 10px 15px;
+            }
+        }
+
+        /* Badges */
+        .badge-teacher {
+            background: var(--teacher-secondary);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 20px;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb-custom {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+
+            .breadcrumb-custom .breadcrumb-item a {
+                color: var(--teacher-secondary);
+                text-decoration: none;
+            }
+
+            .breadcrumb-custom .breadcrumb-item.active {
+                color: #6c757d;
+            }
+
+        /* Toast Container */
+        .toast-container {
+            z-index: 9999;
+        }
+    </style>
+
+    <!-- Render view-specific styles -->
+    @if (IsSectionDefined("Styles"))
+    {
+        @RenderSection("Styles", required: false)
+    }
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="teacher-sidebar">
+        <!-- User Info -->
+@*        <div class="user-info">
+            <div class="user-avatar">
+                @userInitials
+            </div>
+            <h6 class="mb-1">@userName</h6>
+            <span class="badge-teacher">Teacher</span>
+        </div>
+*@
+        <!-- User Info -->
+        <div class="user-info">
+            @await Component.InvokeAsync("TeacherUserInfo")
+            <span class="badge-teacher">Teacher</span>
+        </div>
+        <!-- Navigation -->
+        <nav class="teacher-nav">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Teacher" && currentAction == "TeacherChat" ? "active" : "")"
+                       asp-controller="Teacher" asp-action="TeacherChat">
+                        <i class="fas fa-comments"></i> Messages
+                        <span id="teacherUnreadMessagesCount" class="badge bg-danger badge-pill ms-1" style="display: none;">0</span>
+                    </a>
+                </li>
+ @*               <li class="nav-item">
+                    <a class="nav-link @(currentController == "Chat" && currentAction == "Index" ? "active" : "")"
+                       asp-controller="Chat" asp-action="Index">
+                        <i class="fas fa-comments"></i> Messages
+                        <span id="unreadMessagesCount" class="badge bg-danger badge-pill ms-1" style="display: none;">0</span>
+                    </a>
+                </li>*@
+
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Teacher" && currentAction == "Subjects" ? "active" : "")"
+                       asp-controller="Teacher" asp-action="Subjects">
+                        <i class="fas fa-book"></i> Subjects
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Teacher" && currentAction == "Courses" ? "active" : "")"
+                       asp-controller="Teacher" asp-action="Courses">
+                        <i class="fas fa-graduation-cap"></i> Courses
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Teacher" && currentAction == "Lessons" ? "active" : "")"
+                       asp-controller="Teacher" asp-action="Lessons">
+                        <i class="fas fa-video"></i> Lessons
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Teacher" && currentAction == "Students" ? "active" : "")"
+                       asp-controller="Teacher" asp-action="Students">
+                        <i class="fas fa-users"></i> Students
+                    </a>
+                </li>
+
+                <li class="nav-item mt-4">
+                    <hr class="bg-light mx-3">
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Account" asp-action="Profile">
+                        <i class="fas fa-user-cog"></i> Profile
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="px-3 mt-3">
+                        <button type="submit" class="btn btn-outline-light btn-sm w-100">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="teacher-main">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="breadcrumb-custom">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Teacher" asp-action="Dashboard">Teacher</a></li>
+                <li class="breadcrumb-item active">@ViewData["Title"]</li>
+            </ol>
+        </nav>
+
+        <!-- Content Header -->
+        <div class="content-header">
+            <h3 class="mb-0">@ViewData["Title"]</h3>
+            <p class="text-muted mb-0">@ViewData["Description"]</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container-fluid">
+            <!-- Display TempData Messages -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["InfoMessage"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    @TempData["InfoMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Page Content -->
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    // في _TeacherLayout.cshtml - تحديث JavaScript
+    <script>
+        $(document).ready(function () {
+            // Load unread messages count for teacher
+            function loadTeacherUnreadMessages() {
+                $.get('/Teacher/GetUnreadMessagesCount')
+                    .then(response => {
+                        if (response.success && response.count > 0) {
+                            $('#teacherUnreadMessagesCount').text(response.count).show();
+                        } else {
+                            $('#teacherUnreadMessagesCount').hide();
+                        }
+                    })
+                    .catch(err => console.error('Error loading unread messages:', err));
+            }
+
+            // Load every 30 seconds
+            loadTeacherUnreadMessages();
+            setInterval(loadTeacherUnreadMessages, 30000);
+        });
+    </script>    <!-- Teacher Custom Scripts -->
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        $(document).ready(function () {
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function () {
+                $('.alert').alert('close');
+            }, 5000);
+
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Handle active navigation
+            $('.nav-link').each(function () {
+                if ($(this).hasClass('active')) {
+                    $(this).append('<span class="badge bg-light text-dark ms-2">Current</span>');
+                }
+            });
+
+            // Confirmation for delete actions with class .btn-delete
+            $('.btn-delete').on('click', function (e) {
+                if (!confirm('Are you sure you want to delete this item?')) {
+                    e.preventDefault();
+                }
+            });
+
+            // Toast notification function
+            window.showToast = function (message, type = 'info', duration = 5000) {
+                const icon = {
+                    'success': 'check-circle',
+                    'danger': 'exclamation-circle',
+                    'warning': 'exclamation-triangle',
+                    'info': 'info-circle'
+                }[type] || 'info-circle';
+
+                const toast = $(`
+                            <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        <i class="fas fa-${icon} me-2"></i>
+                                        ${message}
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                </div>
+                            </div>
+                        `);
+
+                // Create toast container if doesn't exist
+                if ($('.toast-container').length === 0) {
+                    $('body').append('<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>');
+                }
+
+                $('.toast-container').append(toast);
+                const bsToast = new bootstrap.Toast(toast[0], {
+                    autohide: true,
+                    delay: duration
+                });
+                bsToast.show();
+
+                // Remove after hide
+                toast.on('hidden.bs.toast', function () {
+                    $(this).remove();
+                });
+            };
+        });
+
+        // Handle file upload preview
+        function previewImage(input, previewId) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#' + previewId).attr('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Video upload progress (simplified version)
+        function uploadVideo(fileInput, progressBarId, urlInputId) {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                url: '/Upload/UploadVideo',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhr: function () {
+                    const xhr = new XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function (e) {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            $('#' + progressBarId).css('width', percent + '%');
+                            $('#' + progressBarId).text(percent + '%');
+                        }
+                    });
+                    return xhr;
+                },
+                success: function (response) {
+                    $('#' + urlInputId).val(response.path);
+                    alert('Video uploaded successfully!');
+                },
+                error: function () {
+                    alert('Error uploading video. Please try again.');
+                }
+            });
+        }
+    </script>
+
+    <!-- Render view-specific scripts -->
+    @if (IsSectionDefined("Scripts"))
+    {
+        @RenderSection("Scripts", required: false)
+    }
+    else
+    {
+        <!-- Default scripts if section not defined -->
+        <script>
+            // Additional default scripts if needed
+        </script>
+    }
+</body>
+</html>

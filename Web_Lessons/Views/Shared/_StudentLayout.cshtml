@@ -1,0 +1,530 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="h-100">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Web Lessons</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #4cc9f0;
+            --info: #4895ef;
+            --warning: #f72585;
+            --danger: #e63946;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fb;
+            color: #333;
+            min-height: 100vh;
+            padding-top: 70px;
+        }
+
+        /* Navbar */
+        .student-navbar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 0.8rem 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1030;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+            .nav-link:hover, .nav-link.active {
+                color: white !important;
+                background: rgba(255,255,255,0.1);
+            }
+
+        /* User Avatar */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--success), var(--info));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+
+        /* Main Content */
+        .main-container {
+            padding: 2rem 0;
+            min-height: calc(100vh - 180px);
+        }
+
+        /* Cards */
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+            .content-card:hover {
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                transform: translateY(-5px);
+            }
+
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            border-left: 5px solid;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            height: 100%;
+            cursor: pointer;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            }
+
+            .stat-card.primary {
+                border-color: var(--primary);
+            }
+
+            .stat-card.success {
+                border-color: var(--success);
+            }
+
+            .stat-card.warning {
+                border-color: var(--warning);
+            }
+
+            .stat-card.info {
+                border-color: var(--info);
+            }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 10px;
+            font-weight: 500;
+            padding: 0.6rem 1.5rem;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+            }
+
+        /* Footer */
+        .student-footer {
+            background: white;
+            border-top: 1px solid var(--gray-light);
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-light);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            body {
+                padding-top: 60px;
+            }
+
+            .main-container {
+                padding: 1rem 0;
+            }
+
+            .content-card {
+                padding: 1rem !important;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .btn {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.9rem !important;
+            }
+
+            .nav-link {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.9rem !important;
+            }
+        }
+    </style>
+
+    @RenderSection("Styles", required: false)
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark student-navbar">
+        <div class="container">
+            <a class="navbar-brand" asp-controller="Student" asp-action="Dashboard">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Web Lessons</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" ? "active" : "")"
+                           asp-controller="Student" asp-action="Dashboard">
+                            <i class="fas fa-home me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "BrowseCourses" ? "active" : "")"
+                           asp-controller="Student" asp-action="BrowseCourses">
+                            <i class="fas fa-search me-1"></i> Browse
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "MyCourses" ? "active" : "")"
+                           asp-controller="Student" asp-action="MyCourses">
+                            <i class="fas fa-bookmark me-1"></i> My Courses
+                        </a>
+                    </li>
+                    <!-- إضافة رابط Chat -->
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Chat" ? "active" : "")"
+                           asp-controller="Chat" asp-action="Index">
+                            <i class="fas fa-comments me-1"></i> Messages
+                            @if (ViewBag.UnreadMessagesCount > 0)
+                            {
+                                <span class="badge bg-danger ms-1">@ViewBag.UnreadMessagesCount</span>
+                            }
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Notifications Link (بدلاً من Dropdown) -->
+                <div class="navbar-nav">
+                    <a class="nav-link position-relative" asp-controller="Student" asp-action="Notifications">
+                        <i class="fas fa-bell"></i>
+                        @if (ViewBag.UnreadNotificationsCount > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                @ViewBag.UnreadNotificationsCount
+                                <span class="visually-hidden">unread notifications</span>
+                            </span>
+                        }
+                    </a>
+                </div>
+
+                <!-- User Menu -->
+                <!-- User Menu -->
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
+                       data-bs-toggle="dropdown">
+                        @await Component.InvokeAsync("UserInfo")
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        @{
+                            var userInfo = await Component.InvokeAsync("UserInfo");
+                            var context = ViewContext;
+                            // بدلاً من محاولة الوصول للمودل، نستخدم JavaScript
+                        }
+                        <li><h6 class="dropdown-header" id="userFullNameHeader">Loading...</h6></li>
+                        <li><a class="dropdown-item" asp-controller="Student" asp-action="Dashboard"><i class="fas fa-home me-2"></i>Dashboard</a></li>
+                        <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
+                                @Html.AntiForgeryToken()
+                                <a class="dropdown-item" href="#" onclick="document.getElementById('logoutForm').submit();">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </a>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1060;"></div>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        <div class="container main-container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="student-footer mt-auto">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">&copy; 2024 Web Lessons - Student Portal</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="footer-links">
+                        <a href="#" class="text-muted me-3">Help Center</a>
+                        <a href="#" class="text-muted">Contact Support</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const icon = type === 'success' ? 'check-circle' :
+                type === 'danger' ? 'exclamation-circle' : 'info-circle';
+
+            // Create toast container if it doesn't exist
+            let container = $('.toast-container');
+            if (container.length === 0) {
+                container = $('<div class="toast-container position-fixed top-0 end-0 p-3"></div>');
+                $('body').append(container);
+            }
+
+            const toast = $(`
+                        <div class="toast align-items-center text-white bg-${type} border-0">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    <i class="fas fa-${icon} me-2"></i>${message}
+                                </div>
+                                <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                            </div>
+                        </div>
+                    `);
+
+            container.append(toast);
+            new bootstrap.Toast(toast[0], { autohide: true, delay: 5000 }).show();
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>showToast('@Html.Raw(TempData["SuccessMessage"])', 'success'); </text>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <text>showToast('@Html.Raw(TempData["ErrorMessage"])', 'danger'); </text>
+        }
+
+            // Welcome message
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(() => {
+                    showToast('Welcome back, @ViewBag.UserFirstName!', 'success');
+                }, 1000);
+            });
+        // Global toast function
+        function showToast(message, type = 'info') {
+            const toast = $(`
+                    <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                `);
+
+            const container = $('.toast-container');
+            if (container.length === 0) {
+                $('body').append('<div class="toast-container position-fixed top-0 end-0 p-3"></div>');
+            }
+
+            $('.toast-container').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Update unread messages count
+        function updateUnreadMessagesCount() {
+            $.ajax({
+                url: '/Student/GetUnreadMessagesCount',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        const count = response.count;
+                        let badge = $('#messagesBadge');
+
+                        if (count > 0) {
+                            if (badge.length === 0) {
+                                $('a[href*="Chat"]').append(`<span class="badge bg-danger ms-1" id="messagesBadge">${count}</span>`);
+                            } else {
+                                badge.text(count);
+                            }
+                        } else {
+                            badge.remove();
+                        }
+                    }
+                },
+                error: function () {
+                    console.log('Failed to update unread count');
+                }
+            });
+        }
+
+        // Call on page load and every minute
+        $(document).ready(function () {
+            updateUnreadMessagesCount();
+            setInterval(updateUnreadMessagesCount, 60000);
+        });
+    </script>
+    <!-- في _StudentLayout.cshtml - إضافة هذا قبل </body> -->
+    <script>
+        // تحديث عدد الرسائل غير المقروءة
+        function updateUnreadMessagesCount() {
+            $.get('/Student/GetUnreadMessagesCount', function (response) {
+                if (response.success) {
+                    const count = response.count;
+                    const badge = $('#messagesBadge');
+
+                    if (count > 0) {
+                        if (badge.length === 0) {
+                            // إضافة الـ badge إذا لم يكن موجوداً
+                            $('a[href="/Chat"]').append(`
+                                    <span class="badge bg-danger ms-1" id="messagesBadge">${count}</span>
+                                `);
+                        } else {
+                            badge.text(count);
+                        }
+                    } else {
+                        badge.remove();
+                    }
+                }
+            });
+        }
+
+        // تحديث كل دقيقة
+        setInterval(updateUnreadMessagesCount, 60000);
+
+        // تحديث عند تحميل الصفحة
+        $(document).ready(function () {
+            updateUnreadMessagesCount();
+        });
+    </script>
+    <!-- SignalR Scripts -->
+    <script src="~/lib/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        // Global chat connection
+        var chatConnection = null;
+
+        function initializeChatConnection() {
+            if (chatConnection && chatConnection.state === signalR.HubConnectionState.Connected) {
+                return;
+            }
+
+            chatConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/chatHub")
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            chatConnection.on("ReceiveMessage", function (message) {
+                // Handle message globally
+                if (typeof window.onChatMessageReceived === 'function') {
+                    window.onChatMessageReceived(message);
+                }
+            });
+
+            chatConnection.on("UserOnline", function (userId) {
+                if (typeof window.onUserOnline === 'function') {
+                    window.onUserOnline(userId);
+                }
+            });
+
+            chatConnection.on("UserOffline", function (userId) {
+                if (typeof window.onUserOffline === 'function') {
+                    window.onUserOffline(userId);
+                }
+            });
+
+            chatConnection.start()
+                .then(function () {
+                    console.log('Global chat connection established');
+                })
+                .catch(function (err) {
+                    console.error('Error establishing connection:', err);
+                    setTimeout(initializeChatConnection, 5000);
+                });
+        }
+
+        // Initialize connection when page loads
+        $(document).ready(function () {
+            initializeChatConnection();
+        });
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Web Lessons</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        /* Background gradient */
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Login card */
+        .login-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            padding: 2.5rem;
+            animation: fadeIn 0.6s ease-out;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        /* Brand header */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+            .brand-header i {
+                font-size: 3rem;
+                color: #667eea;
+                margin-bottom: 1rem;
+            }
+
+            .brand-header h2 {
+                color: #333;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+            }
+
+            .brand-header p {
+                color: #666;
+                font-size: 0.9rem;
+            }
+
+        /* Form styling */
+        .form-label {
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s;
+        }
+
+            .form-control:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+            }
+
+        .btn-primary {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            }
+
+        /* Links */
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #666;
+        }
+
+            .auth-links a {
+                color: #667eea;
+                text-decoration: none;
+                font-weight: 500;
+            }
+
+                .auth-links a:hover {
+                    text-decoration: underline;
+                }
+
+        /* Animation */
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @@media (max-width: 576px) {
+            .login-card {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="login-card">
+                    <!-- Brand Header -->
+                    <div class="brand-header">
+                        <i class="fas fa-graduation-cap"></i>
+                        <h2>Web Lessons</h2>
+                        <p>Learn anytime, anywhere</p>
+                    </div>
+
+                    <!-- Dynamic Content (Login or 
+
+
+                    ) -->
+                    @RenderBody()
+
+                    <!-- Footer Links -->
+                    <div class="auth-links">
+                        @if (ViewContext.RouteData.Values["action"].ToString() == "Login")
+                        {
+                            <p>Don't have an account? <a asp-controller="Account" asp-action="SignUp">Sign up</a></p>
+                        }
+                        else
+                        {
+                            <p>Already have an account? <a asp-controller="Account" asp-action="Login">Login</a></p>
+                        }
+                        <p class="mt-2"><a asp-controller="Home" asp-action="Index">← Back to home</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

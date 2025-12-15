@@ -1,0 +1,193 @@
+﻿@model IEnumerable<Web_Lessons.ViewModels.CourseProgressViewModel>
+@{
+    Layout = "_StudentLayout";
+    ViewData["Title"] = "My Progress";
+    ViewData["Description"] = "Track your learning progress";
+
+    var totalCourses = Model.Count();
+    var totalLessons = Model.Sum(c => c.TotalLessons);
+    var completedLessons = Model.Sum(c => c.CompletedLessons);
+    var overallProgress = totalLessons > 0 ? (int)Math.Round((double)completedLessons / totalLessons * 100) : 0;
+}
+
+<div class="row">
+    <!-- Overall Progress -->
+    <div class="col-md-12 mb-4">
+        <div class="content-card">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3>Learning Progress</h3>
+                    <p class="text-muted mb-0">Track your progress across all courses</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="display-4 fw-bold text-primary">@overallProgress%</div>
+                    <small class="text-muted">Overall Progress</small>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="d-flex justify-content-between mb-1">
+                    <small>Total Progress</small>
+                    <small>@completedLessons/@totalLessons lessons</small>
+                </div>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-primary" style="width: @overallProgress%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Stats -->
+    <div class="col-md-4 mb-4">
+        <div class="stat-card stat-primary">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted mb-0">Courses</h6>
+                    <h2 class="mb-0">@totalCourses</h2>
+                </div>
+                <div class="icon-circle bg-primary">
+                    <i class="fas fa-book text-white"></i>
+                </div>
+            </div>
+            <span class="small text-muted mt-3">Enrolled Courses</span>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="stat-card stat-success">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted mb-0">Lessons</h6>
+                    <h2 class="mb-0">@totalLessons</h2>
+                </div>
+                <div class="icon-circle bg-success">
+                    <i class="fas fa-video text-white"></i>
+                </div>
+            </div>
+            <span class="small text-muted mt-3">Total Lessons</span>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="stat-card stat-warning">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted mb-0">Completed</h6>
+                    <h2 class="mb-0">@completedLessons</h2>
+                </div>
+                <div class="icon-circle bg-warning">
+                    <i class="fas fa-check-circle text-white"></i>
+                </div>
+            </div>
+            <span class="small text-muted mt-3">Lessons Completed</span>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Course Progress List -->
+    <div class="col-md-12">
+        <div class="content-card">
+            <h5 class="mb-3">Course Progress (@totalCourses)</h5>
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    You haven't enrolled in any courses yet.
+                    <a asp-controller="Student" asp-action="BrowseCourses" class="alert-link">Browse courses</a> to get started.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Subject</th>
+                                <th>Progress</th>
+                                <th>Completed</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var course in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@course.CourseTitle</strong>
+                                    </td>
+                                    <td>@course.SubjectName</td>
+                                    <td>
+                                        <div class="progress" style="height: 8px; width: 150px;">
+                                            <div class="progress-bar bg-success" style="width: @course.ProgressPercentage%"></div>
+                                        </div>
+                                        <small>@course.ProgressPercentage%</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">@course.CompletedLessons/@course.TotalLessons</span>
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Student" asp-action="CourseDetails" asp-route-id="@course.CourseId"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Progress Chart (Placeholder) -->
+    <div class="col-md-12">
+        <div class="content-card">
+            <h5 class="mb-3">Progress Overview</h5>
+            <div class="text-center py-5">
+                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Progress chart would be displayed here</p>
+                <small class="text-muted">Showing completion rate across all courses</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .icon-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        border-top: 4px solid;
+    }
+
+        .stat-card.stat-primary {
+            border-color: #3498db;
+        }
+
+        .stat-card.stat-success {
+            border-color: #2ecc71;
+        }
+
+        .stat-card.stat-warning {
+            border-color: #f39c12;
+        }
+</style>

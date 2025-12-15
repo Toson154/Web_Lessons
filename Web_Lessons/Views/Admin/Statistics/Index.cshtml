@@ -1,0 +1,357 @@
+﻿@model Web_Lessons.ViewModels.AdminStatisticsViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "System Statistics";
+    ViewData["Description"] = "Detailed analytics and reports";
+}
+
+<div class="row">
+    <!-- User Statistics -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-primary">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h2 class="mb-2">@Model.TotalUsers</h2>
+            <h6 class="text-uppercase text-muted mb-0">Total Users</h6>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-user-plus text-success me-1"></i>
+                @Model.UsersThisMonth new this month
+            </small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-success">
+            <div class="stat-icon">
+                <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <h2 class="mb-2">@Model.TeachersCount</h2>
+            <h6 class="text-uppercase text-muted mb-0">Teachers</h6>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-user-graduate me-1"></i>
+                @Model.StudentsCount students
+            </small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-warning">
+            <div class="stat-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <h2 class="mb-2">@Model.TotalCourses</h2>
+            <h6 class="text-uppercase text-muted mb-0">Courses</h6>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-video me-1"></i>
+                @Model.TotalLessons lessons
+            </small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card stat-info">
+            <div class="stat-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <h2 class="mb-2">@Model.ActiveUsers</h2>
+            <h6 class="text-uppercase text-muted mb-0">Active Users</h6>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-percentage me-1"></i>
+                @((Model.TotalUsers > 0 ? (Model.ActiveUsers * 100 / Model.TotalUsers) : 0).ToString("0"))% active rate
+            </small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Charts -->
+    <div class="col-lg-8 mb-4">
+        <div class="content-card">
+            <h5 class="mb-3">User Growth & Activity</h5>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <h6 class="text-muted mb-3">Monthly Enrollments</h6>
+                    <canvas id="monthlyEnrollmentsChart" height="200"></canvas>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <h6 class="text-muted mb-3">User Distribution</h6>
+                    <canvas id="userDistributionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="content-card mt-4">
+            <h5 class="mb-3">Recent Enrollments</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Course</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentEnrollments != null && Model.RecentEnrollments.Any())
+                        {
+                            @foreach (var enrollment in Model.RecentEnrollments)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-3">
+                                                <div class="avatar-initial bg-success rounded">
+                                                    @enrollment.Student?.FullName?[0]
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <strong>@enrollment.Student?.FullName</strong>
+                                                <div class="text-muted small">@enrollment.Student?.Email</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @enrollment.Course?.Title
+                                        <div class="text-muted small">@enrollment.Course?.Subject?.Name</div>
+                                    </td>
+                                    <td>
+                                        <small>@enrollment.EnrolledAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">Active</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="fas fa-book-open fa-2x mb-2"></i>
+                                    <p>No recent enrollments</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Stats -->
+    <div class="col-lg-4">
+        <!-- Content Statistics -->
+        <div class="content-card mb-4">
+            <h5 class="mb-3">Content Statistics</h5>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Total Subjects</small>
+                <h4>@Model.TotalSubjects</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Total Courses</small>
+                <h4>@Model.TotalCourses</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Total Lessons</small>
+                <h4>@Model.TotalLessons</h4>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block">Total Enrollments</small>
+                <h4>@Model.TotalEnrollments</h4>
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+                <a asp-controller="Admin" asp-action="Courses" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-eye me-1"></i> View All Courses
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Courses -->
+        <div class="content-card">
+            <h5 class="mb-3">Recently Added Courses</h5>
+
+            <div class="list-group list-group-flush">
+                @if (Model.RecentCourses != null && Model.RecentCourses.Any())
+                {
+                    @foreach (var course in Model.RecentCourses)
+                    {
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">@course.Title</h6>
+                                    <small class="text-muted">@course.Subject?.Name</small>
+                                </div>
+                                <span class="badge bg-info">@course.Level</span>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-video me-1"></i> @course.Lessons?.Count() lessons
+                                </small>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-3">
+                        <i class="fas fa-book fa-2x text-muted mb-2"></i>
+                        <p class="text-muted small">No courses available</p>
+                    </div>
+                }
+            </div>
+
+            <div class="text-center mt-3">
+                <a asp-controller="Admin" asp-action="Courses" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i> View All Courses
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Section -->
+<div class="content-card mt-4">
+    <h5 class="mb-3">Generate Reports</h5>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                    <h6>User Report</h6>
+                    <p class="text-muted small">Export all users with details</p>
+                    <button class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-download me-1"></i> Download Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                    <h6>Course Report</h6>
+                    <p class="text-muted small">Detailed course analytics</p>
+                    <button class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-download me-1"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                    <h6>Analytics Report</h6>
+                    <p class="text-muted small">System performance metrics</p>
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-download me-1"></i> Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Monthly Enrollments Chart
+            const enrollCtx = document.getElementById('monthlyEnrollmentsChart').getContext('2d');
+            new Chart(enrollCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Enrollments',
+                        data: [12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45],
+                        borderColor: '#1abc9c',
+                        backgroundColor: 'rgba(26, 188, 156, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#1abc9c',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // User Distribution Chart
+            const distCtx = document.getElementById('userDistributionChart').getContext('2d');
+            new Chart(distCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Students', 'Teachers', 'Admins'],
+                    datasets: [{
+                        label: 'Users',
+                        data: [@Model.StudentsCount, @Model.TeachersCount, 1],
+                        backgroundColor: [
+                            '#9b59b6',
+                            '#3498db',
+                            '#1abc9c'
+                        ],
+                        borderColor: [
+                            '#8e44ad',
+                            '#2980b9',
+                            '#16a085'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

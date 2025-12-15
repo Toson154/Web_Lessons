@@ -1,0 +1,19 @@
+﻿@{
+    Layout = "_LoginLayout";
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="text-center py-5">
+    <i class="fas fa-lock fa-4x text-danger mb-4"></i>
+    <h2 class="text-danger">Access Denied</h2>
+    <p class="lead">You don't have permission to access this page.</p>
+    <p class="text-muted">Please contact the administrator if you believe this is an error.</p>
+    <div class="mt-4">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary me-2">
+            <i class="fas fa-home me-1"></i> Go Home
+        </a>
+        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary">
+            <i class="fas fa-sign-in-alt me-1"></i> Login with different account
+        </a>
+    </div>
+</div>

@@ -1,0 +1,88 @@
+﻿@model Web_Lessons.ViewModels.LoginViewModel
+@{
+    Layout = "_LoginLayout";
+    ViewData["Title"] = "Login";
+}
+
+<!-- Display TempData messages -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Login Form -->
+<form asp-action="Login" method="post" asp-route-returnUrl="@ViewData["ReturnUrl"]">
+    @Html.AntiForgeryToken()
+
+    <!-- Email -->
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label">Email Address</label>
+        <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <!-- Password -->
+    <div class="mb-3">
+        <div class="d-flex justify-content-between">
+            <label asp-for="Password" class="form-label">Password</label>
+            <a href="#" class="small text-muted">Forgot password?</a>
+        </div>
+        <input asp-for="Password" class="form-control" placeholder="Enter your password" />
+        <span asp-validation-for="Password" class="text-danger small"></span>
+    </div>
+
+    <!-- Remember Me -->
+    <div class="mb-3 form-check">
+        <input asp-for="RememberMe" class="form-check-input" />
+        <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-sign-in-alt me-2"></i>Login
+        </button>
+    </div>
+
+    <!-- Social Login (Optional) -->
+    <div class="text-center mb-3">
+        <p class="text-muted">Or login with</p>
+        <div>
+            <button type="button" class="btn btn-outline-primary btn-sm me-2">
+                <i class="fab fa-google"></i> Google
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm">
+                <i class="fab fa-microsoft"></i> Microsoft
+            </button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        $(document).ready(function () {
+            setTimeout(function () {
+                $('.alert').alert('close');
+            }, 5000);
+
+            // Focus on email field
+            $('#Email').focus();
+        });
+    </script>
+}

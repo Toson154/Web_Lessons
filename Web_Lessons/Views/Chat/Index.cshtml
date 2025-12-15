@@ -1,0 +1,224 @@
+﻿@model Web_Lessons.ViewModels.ChatIndexViewModel
+@{
+    Layout = "_StudentLayout";
+    ViewData["Title"] = "Messages";
+}
+
+<div class="container-fluid chat-container">
+    <div class="row h-100">
+        <!-- Chat List Sidebar -->
+        <div class="col-md-4 col-lg-3 border-end bg-light p-0">
+            <div class="d-flex flex-column h-100">
+                <!-- Header -->
+                <div class="p-3 border-bottom bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Messages</h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="mt-3">
+                        <input type="text"
+                               class="form-control"
+                               id="chatSearch"
+                               placeholder="Search conversations...">
+                    </div>
+                </div>
+
+                <!-- Chat List -->
+                <div class="flex-grow-1 overflow-auto" id="chatsList">
+                    @if (!Model.Chats.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No conversations yet</p>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                                Start Your First Chat
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var chat in Model.Chats)
+                        {
+                            <a href="/Chat/Details/@chat.Id"
+                               class="list-group-item list-group-item-action border-0 rounded-0 chat-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="position-relative me-3">
+                                        <img src="@chat.OtherUserProfileImage"
+                                             alt="@chat.OtherUserName"
+                                             class="rounded-circle"
+                                             style="width: 45px; height: 45px; object-fit: cover;">
+                                        @if (chat.IsOnline)
+                                        {
+                                            <span class="position-absolute bottom-0 end-0 bg-success rounded-circle"
+                                                  style="width: 10px; height: 10px; border: 2px solid white;"></span>
+                                        }
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">@chat.OtherUserName</h6>
+                                        @if (chat.IsTeacher)
+                                        {
+                                            <small class="text-primary">
+                                                <i class="fas fa-chalkboard-teacher"></i> Teacher
+                                            </small>
+                                        }
+                                        @if (!string.IsNullOrEmpty(chat.LastMessage))
+                                        {
+                                            <p class="text-muted small mb-0 mt-1 text-truncate" style="max-width: 150px;">
+                                                @chat.LastMessage
+                                            </p>
+                                        }
+                                    </div>
+                                    @if (chat.UnreadCount > 0)
+                                    {
+                                        <span class="badge bg-danger rounded-pill">
+                                            @chat.UnreadCount
+                                        </span>
+                                    }
+                                </div>
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-md-8 col-lg-9 p-0">
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 bg-light">
+                <div class="text-center">
+                    <i class="fas fa-comments fa-4x text-muted mb-4"></i>
+                    <h4 class="mb-3">Welcome to Messages</h4>
+                    <p class="text-muted mb-4">Select a conversation or start a new one</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                        <i class="fas fa-plus me-2"></i> Start New Chat
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Chat Modal -->
+<div class="modal fade" id="newChatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Start New Chat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="teachersList">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading teachers...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-container {
+        height: calc(100vh - 70px);
+    }
+
+    .chat-item {
+        border-radius: 0 !important;
+        border-left: 3px solid transparent;
+        transition: all 0.3s;
+    }
+
+        .chat-item:hover, .chat-item.active {
+            background-color: #e3f2fd;
+            border-left-color: #007bff;
+        }
+
+    #chatSearch:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Search chats
+            $('#chatSearch').on('input', function () {
+                const searchTerm = $(this).val().toLowerCase();
+                $('.chat-item').each(function () {
+                    const text = $(this).text().toLowerCase();
+                    $(this).toggle(text.includes(searchTerm));
+                });
+            });
+
+            // Load teachers for modal
+            $('#newChatModal').on('show.bs.modal', function () {
+                $.get('/Student/GetAvailableTeachers', function (response) {
+                    if (response.success && response.teachers.length > 0) {
+                        let html = '<form id="startChatForm">';
+                        html += '<div class="mb-3">';
+                        html += '<label class="form-label">Select Teacher</label>';
+                        html += '<select class="form-select" id="teacherSelect" required>';
+                        html += '<option value="">-- Choose Teacher --</option>';
+
+                        response.teachers.forEach(teacher => {
+                            html += `<option value="${teacher.id}">${teacher.name}</option>`;
+                        });
+
+                        html += '</select>';
+                        html += '</div>';
+                        html += '<div class="mb-3">';
+                        html += '<label class="form-label">Initial Message (Optional)</label>';
+                        html += '<textarea class="form-control" id="initialMessage" rows="3"></textarea>';
+                        html += '</div>';
+                        html += '<div class="d-grid">';
+                        html += '<button type="button" class="btn btn-primary" onclick="startNewChat()">Start Chat</button>';
+                        html += '</div>';
+                        html += '</form>';
+
+                        $('#teachersList').html(html);
+                    } else {
+                        $('#teachersList').html(`
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">No teachers available</p>
+                                    </div>
+                                `);
+                    }
+                });
+            });
+
+            // Global function for starting new chat
+            window.startNewChat = function () {
+                const teacherId = $('#teacherSelect').val();
+                const initialMessage = $('#initialMessage').val().trim();
+
+                if (!teacherId) {
+                    showToast('Please select a teacher', 'warning');
+                    return;
+                }
+
+                $.post('/Chat/Create', {
+                    TeacherId: teacherId,
+                    InitialMessage: initialMessage,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                }, function (response) {
+                    if (response.success) {
+                        showToast('Chat created successfully', 'success');
+                        $('#newChatModal').modal('hide');
+                        window.location.href = '/Chat/Details/' + response.chatId;
+                    } else {
+                        showToast(response.message || 'Error creating chat', 'danger');
+                    }
+                });
+            };
+        });
+    </script>
+}

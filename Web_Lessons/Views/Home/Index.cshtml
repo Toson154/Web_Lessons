@@ -1,0 +1,522 @@
+﻿@model Web_Lessons.ViewModels.HomePageViewModel
+@{
+    Layout = "_HomeLayout";
+    ViewData["Title"] = "Learn, Grow, Succeed - Web Lessons";
+}
+
+@section Styles {
+    <style>
+        /* Hero Section - تحسين */
+        .hero-section {
+            background: linear-gradient(135deg, #4361ee 0%, #3a56d4 100%);
+            color: white;
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .hero-stats {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        /* Featured Courses - تحسين */
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+            .section-title:after {
+                content: '';
+                position: absolute;
+                bottom: -10px;
+                left: 0;
+                width: 60px;
+                height: 4px;
+                background: linear-gradient(to right, #4361ee, #3a56d4);
+                border-radius: 2px;
+            }
+
+        .course-card-home {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+            .course-card-home:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+            }
+
+        /* Teachers Section */
+        .teacher-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            height: 100%;
+            border: 2px solid transparent;
+        }
+
+            .teacher-card:hover {
+                border-color: #4361ee;
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(67, 97, 238, 0.1);
+            }
+
+        .teacher-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #4361ee;
+            margin: 0 auto 20px;
+        }
+
+        /* Features - تحسين */
+        .feature-card {
+            text-align: center;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+            .feature-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            }
+
+            .feature-card i {
+                font-size: 2.5rem;
+                background: linear-gradient(135deg, #4361ee, #3a56d4);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 20px;
+            }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #4361ee 0%, #3a56d4 100%);
+            border-radius: 20px;
+            padding: 40px;
+            color: white;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .hero-section {
+                padding: 60px 0;
+                min-height: auto;
+            }
+
+            .hero-title {
+                font-size: 2.2rem;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+
+            .teacher-card {
+                padding: 20px;
+            }
+
+            .cta-section {
+                padding: 30px 20px;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .hero-title {
+                font-size: 1.8rem;
+            }
+
+            .hero-stats {
+                padding: 15px;
+            }
+
+            .course-card-home {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Animations */
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .delay-100 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-200 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-300 {
+            animation-delay: 0.3s;
+        }
+    </style>
+}
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="hero-content animate-fade-in-up">
+                    <h1 class="hero-title">
+                        Master New Skills with<br />
+                        <span class="text-warning">Expert Instructors</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Join our community of learners and transform your career with
+                        practical, project-based courses from industry professionals.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a asp-controller="Account" asp-action="SignUp"
+                           class="btn btn-light btn-lg px-4 py-3 fw-bold">
+                            <i class="fas fa-rocket me-2"></i> Get Started Free
+                        </a>
+                        <a asp-controller="Student" asp-action="BrowseCourses"
+                           class="btn btn-outline-light btn-lg px-4 py-3">
+                            <i class="fas fa-play-circle me-2"></i> Explore Courses
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="position-relative animate-fade-in-up delay-100">
+                    <div class="text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-graduation-cap display-1 text-white opacity-25"></i>
+                        </div>
+                        <h4 class="text-white mb-3">Start Learning Today</h4>
+                        <p class="text-white-75">No commitment, cancel anytime</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="hero-stats animate-fade-in-up delay-200">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <div class="stat-item">
+                                <span class="stat-number">@Model.TotalCourses</span>
+                                <span class="stat-label">Courses</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="stat-item">
+                                <span class="stat-number">@Model.TotalStudents</span>
+                                <span class="stat-label">Students</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="stat-item">
+                                <span class="stat-number">@Model.TotalTeachers</span>
+                                <span class="stat-label">Instructors</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="stat-item">
+                                <span class="stat-number">@Model.TotalLessons</span>
+                                <span class="stat-label">Lessons</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Courses -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">Popular Courses</h2>
+                <p class="text-muted">Start with our most popular courses</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var course in Model.FeaturedCourses)
+            {
+                <div class="col-lg-3 col-md-6">
+                    <div class="course-card-home">
+                        <div class="course-image-home position-relative"
+                             style="height: 160px; background-image: url('@course.ThumbnailUrl');
+                                    background-size: cover; background-position: center;">
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-primary">@course.Level</span>
+                            </div>
+                            <div class="position-absolute bottom-0 start-0 m-3">
+                                <span class="badge bg-dark">
+                                    <i class="fas fa-users me-1"></i> @course.StudentCount
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <h5 class="fw-bold mb-2">@course.Title</h5>
+                            <p class="text-muted small mb-3">
+                                @(course.Description?.Length > 60 ?
+                                    course.Description.Substring(0, 60) + "..." :
+                                    course.Description ?? "Learn from experts")
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="@course.TeacherProfileImage"
+                                         alt="@course.TeacherName"
+                                         class="rounded-circle me-2"
+                                         style="width: 30px; height: 30px; object-fit: cover;"
+                                         onerror="this.src='/images/avatar.png'">
+                                    <small class="fw-bold">@course.TeacherName</small>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-video me-1"></i> @course.LessonCount
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="text-center mt-4">
+            <a asp-controller="Student" asp-action="BrowseCourses"
+               class="btn btn-primary px-4">
+                <i class="fas fa-eye me-2"></i> View All Courses
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Teachers -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">Expert Instructors</h2>
+                <p class="text-muted">Learn from industry professionals</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var teacher in Model.FeaturedTeachers)
+            {
+                <div class="col-lg-3 col-md-6">
+                    <div class="teacher-card">
+                        <img src="@teacher.ProfileImage"
+                             alt="@teacher.Name"
+                             class="teacher-avatar"
+                             onerror="this.src='/images/avatar.png'">
+                        <h5 class="fw-bold mb-2">@teacher.Name</h5>
+                        <p class="text-muted small mb-3">@teacher.Subject</p>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-center gap-3">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-users me-1"></i> @teacher.StudentCount
+                                </span>
+                                <span class="badge bg-success">
+                                    <i class="fas fa-book me-1"></i> @teacher.CourseCount
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-warning mb-3">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                            @*<small class="text-muted ms-1">@teacher.Rating</small>*@
+                        </div>
+                        <p class="text-muted small">@teacher.Bio</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h2 class="section-title">Why Choose Us</h2>
+                <p class="text-muted">The best platform for online learning</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var feature in Model.Features)
+            {
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card">
+                        <i class="fas @feature.Icon"></i>
+                        <h5 class="fw-bold mb-3">@feature.Title</h5>
+                        <p class="text-muted">@feature.Description</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="cta-section">
+            <h2 class="fw-bold mb-3">Start Learning Today</h2>
+            <p class="fs-5 mb-4 opacity-90">
+                Join @Model.TotalStudents+ students mastering new skills.
+                7-day free trial, no credit card required.
+            </p>
+            <div class="d-flex flex-wrap gap-3 justify-content-center">
+                <a asp-controller="Account" asp-action="SignUp"
+                   class="btn btn-light btn-lg px-4 py-3 fw-bold">
+                    <i class="fas fa-user-plus me-2"></i> Sign Up Free
+                </a>
+                <a asp-controller="Student" asp-action="BrowseCourses"
+                   class="btn btn-outline-light btn-lg px-4 py-3">
+                    <i class="fas fa-search me-2"></i> Browse Courses
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Simple counter animation
+        function animateCounter(element, target) {
+            let count = 0;
+            const increment = target / 100;
+            const timer = setInterval(() => {
+                count += increment;
+                if (count >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(count);
+                }
+            }, 20);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            // Animate stats
+            const statNumbers = document.querySelectorAll('.stat-number');
+            statNumbers.forEach(stat => {
+                const target = parseInt(stat.textContent);
+                if (!isNaN(target)) {
+                    stat.textContent = '0';
+                    setTimeout(() => {
+                        animateCounter(stat, target);
+                    }, 500);
+                }
+            });
+
+            // Add hover effects
+            const cards = document.querySelectorAll('.course-card-home, .teacher-card, .feature-card');
+            cards.forEach(card => {
+                card.style.transition = 'all 0.3s ease';
+            });
+
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 100,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    `;
+
+            // Add to page
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+
+            // Remove after 5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+    </script>
+}

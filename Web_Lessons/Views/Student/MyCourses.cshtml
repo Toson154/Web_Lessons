@@ -1,0 +1,363 @@
+﻿@model List<Web_Lessons.ViewModels.StudentCourseViewModel>
+@{
+    Layout = "_StudentLayout";
+    ViewData["Title"] = "My Courses";
+}
+
+<div class="main-container">
+    <div class="content-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">
+                    <i class="fas fa-bookmark me-2 text-primary"></i>
+                    My Courses
+                </h1>
+                <p class="text-muted mb-0">Continue your learning journey</p>
+            </div>
+            <a href="@Url.Action("BrowseCourses")" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Find More Courses
+            </a>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-book-open fa-4x text-muted mb-4"></i>
+                <h4 class="mb-3">No Courses Yet</h4>
+                <p class="text-muted mb-4">You haven't enrolled in any courses yet.</p>
+                <a href="@Url.Action("BrowseCourses")" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Browse Courses
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var course in Model)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            @if (!string.IsNullOrEmpty(course.Course.ThumbnailUrl))
+                            {
+                                <img src="@course.Course.ThumbnailUrl"
+                                     class="card-img-top"
+                                     alt="@course.Course.Title"
+                                     style="height: 180px; object-fit: cover;">
+                            }
+
+                            <div class="card-body d-flex flex-column">
+                                <!-- Course Header -->
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h5 class="card-title mb-1">@course.Course.Title</h5>
+                                        <p class="text-muted small mb-2">
+                                            @course.Course.Subject?.Name
+                                        </p>
+                                    </div>
+                                    <span class="badge bg-primary">@course.Course.Level</span>
+                                </div>
+
+                                <!-- Teacher Info -->
+                                @if (course.Teacher != null)
+                                {
+                                    <div class="d-flex align-items-center mb-3">
+                                        @if (!string.IsNullOrEmpty(course.Teacher.ProfileImageUrl))
+                                        {
+                                            <img src="@course.Teacher.ProfileImageUrl"
+                                                 alt="@course.Teacher.FullName"
+                                                 class="rounded-circle me-2"
+                                                 style="width: 35px; height: 35px; object-fit: cover;">
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2"
+                                                 style="width: 35px; height: 35px;">
+                                                <span class="text-white small">
+                                                    @course.Teacher.FullName[0]
+                                                </span>
+                                            </div>
+                                        }
+                                        <div>
+                                            <small class="d-block fw-bold">@course.Teacher.FullName</small>
+                                            <small class="text-muted">
+                                                <i class="fas fa-chalkboard-teacher me-1"></i>Teacher
+                                            </small>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Progress -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Progress</small>
+                                        <small class="fw-bold">@course.ProgressPercentage%</small>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-primary"
+                                             style="width: @course.ProgressPercentage%"></div>
+                                    </div>
+                                    <small class="text-muted">
+                                        @course.CompletedLessons of @course.TotalLessons lessons completed
+                                    </small>
+                                </div>
+
+                                <!-- Course Info -->
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-clock me-1"></i>@course.TimeSpentHours hrs
+                                            </small>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>@course.EnrollmentDateFormatted
+                                            </small>
+                                        </div>
+
+                                        @if (course.LastActivity.HasValue)
+                                        {
+                                            <small class="text-muted" id="lastActivity-@course.Course.Id">
+                                                <i class="fas fa-history me-1"></i>
+                                                <script>
+                                                    document.write(getTimeAgo('@course.LastActivity.Value.ToString("yyyy-MM-ddTHH:mm:ss")'));
+                                                </script>
+                                            </small>
+                                        }
+                                    </div>
+
+                                    <!-- Buttons -->
+                                    <div class="d-grid gap-2">
+                                        <a href="@Url.Action("CourseDetails", "Student", new { id = course.Course.Id })"
+                                           class="btn btn-primary">
+                                            <i class="fas fa-play me-1"></i>Continue Learning
+                                        </a>
+
+                                        @if (course.Teacher != null)
+                                        {
+                                            <button class="btn btn-outline-primary message-teacher-btn"
+                                                    data-teacher-id="@course.Teacher.Id"
+                                                    data-teacher-name="@course.Teacher.FullName"
+                                                    data-course-id="@course.Course.Id"
+                                                    data-course-title="@course.Course.Title">
+                                                <i class="fas fa-comment me-1"></i>Message Instructor
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Statistics -->
+            <div class="row mt-5">
+                <div class="col-md-4">
+                    <div class="stat-card primary">
+                        <div class="stat-icon">
+                            <i class="fas fa-book text-primary"></i>
+                        </div>
+                        <h3>@Model.Count</h3>
+                        <p class="text-muted mb-0">Total Courses</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card success">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </div>
+                        <h3>@Model.Sum(c => c.CompletedLessons)</h3>
+                        <p class="text-muted mb-0">Lessons Completed</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card info">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock text-info"></i>
+                        </div>
+                        <h3>@Model.Sum(c => c.TimeSpentHours)h</h3>
+                        <p class="text-muted mb-0">Learning Time</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Message Teacher Modal -->
+<div class="modal fade" id="messageTeacherModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Message Instructor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="messageTeacherForm">
+                    <div class="mb-3">
+                        <label class="form-label">To</label>
+                        <input type="text" class="form-control" id="teacherName" readonly>
+                        <input type="hidden" id="teacherId">
+                        <input type="hidden" id="courseId">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Course</label>
+                        <input type="text" class="form-control" id="courseTitle" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" id="messageContent" rows="4"
+                                  placeholder="Type your message here..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="sendMessageBtn">
+                    <i class="fas fa-paper-plane me-2"></i>Send Message
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: all 0.3s;
+        border: 1px solid #e9ecef;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        }
+
+    .progress {
+        border-radius: 10px;
+        background-color: #f0f2f5;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // دالة JavaScript لتحويل التاريخ إلى "منذ فترة"
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSecs = Math.floor(diffMs / 1000);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffDays > 365) {
+                const years = Math.floor(diffDays / 365);
+                return years + (years === 1 ? ' year ago' : ' years ago');
+            }
+            if (diffDays > 30) {
+                const months = Math.floor(diffDays / 30);
+                return months + (months === 1 ? ' month ago' : ' months ago');
+            }
+            if (diffDays > 7) {
+                const weeks = Math.floor(diffDays / 7);
+                return weeks + (weeks === 1 ? ' week ago' : ' weeks ago');
+            }
+            if (diffDays > 0) {
+                return diffDays + (diffDays === 1 ? ' day ago' : ' days ago');
+            }
+            if (diffHours > 0) {
+                return diffHours + (diffHours === 1 ? ' hour ago' : ' hours ago');
+            }
+            if (diffMins > 0) {
+                return diffMins + (diffMins === 1 ? ' minute ago' : ' minutes ago');
+            }
+            if (diffSecs > 30) {
+                return diffSecs + ' seconds ago';
+            }
+
+            return 'just now';
+        }
+
+        $(document).ready(function () {
+            // Handle message teacher button click
+            $('.message-teacher-btn').click(function () {
+                const teacherId = $(this).data('teacher-id');
+                const teacherName = $(this).data('teacher-name');
+                const courseId = $(this).data('course-id');
+                const courseTitle = $(this).data('course-title');
+
+                $('#teacherId').val(teacherId);
+                $('#teacherName').val(teacherName);
+                $('#courseId').val(courseId);
+                $('#courseTitle').val(courseTitle);
+
+                // Set default message
+                $('#messageContent').val(`Hi, I have a question about your course "${courseTitle}"`);
+
+                const modal = new bootstrap.Modal(document.getElementById('messageTeacherModal'));
+                modal.show();
+            });
+
+            // Handle send message
+            $('#sendMessageBtn').click(function () {
+                sendMessageToTeacher();
+            });
+
+            function sendMessageToTeacher() {
+                const teacherId = $('#teacherId').val();
+                const teacherName = $('#teacherName').val();
+                const courseId = $('#courseId').val();
+                const courseTitle = $('#courseTitle').val();
+                const message = $('#messageContent').val().trim();
+
+                if (!message) {
+                    showToast('Please enter a message', 'warning');
+                    return;
+                }
+
+                const btn = $('#sendMessageBtn');
+                btn.prop('disabled', true).html(`
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            Sending...
+                        `);
+
+                $.ajax({
+                    url: '/Chat/Create',
+                    type: 'POST',
+                    data: {
+                        TeacherId: teacherId,
+                        InitialMessage: message,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            showToast('Message sent successfully!', 'success');
+
+                            // Close modal
+                            bootstrap.Modal.getInstance(document.getElementById('messageTeacherModal')).hide();
+
+                            // Redirect to chat
+                            setTimeout(() => {
+                                if (response.redirect) {
+                                    window.location.href = response.redirect;
+                                } else if (response.chatId) {
+                                    window.location.href = '/Chat/Details/' + response.chatId;
+                                }
+                            }, 1500);
+                        } else {
+                            showToast(response.message || 'Failed to send message', 'danger');
+                            btn.prop('disabled', false).html('<i class="fas fa-paper-plane me-2"></i>Send Message');
+                        }
+                    },
+                    error: function (xhr) {
+                        showToast('Error sending message. Please try again.', 'danger');
+                        btn.prop('disabled', false).html('<i class="fas fa-paper-plane me-2"></i>Send Message');
+                    }
+                });
+            }
+        });
+    </script>
+}

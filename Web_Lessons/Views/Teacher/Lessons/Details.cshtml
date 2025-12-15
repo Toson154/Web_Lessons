@@ -1,0 +1,597 @@
+﻿@model Web_Lessons.ViewModels.TeacherLessonViewModel
+@{
+    Layout = "_TeacherLayout";
+    ViewData["Title"] = Model?.Lesson?.Title ?? "Lesson Details";
+
+    var lesson = Model?.Lesson;
+    var course = Model?.Course;
+}
+
+<style>
+    /* تنسيقات خاصة */
+    .teacher-comment {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .teacher-comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .teacher-comment-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .teacher-comment-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .teacher-chat-btn {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+        .teacher-chat-btn:hover {
+            background: #45a049;
+        }
+
+    .teacher-reply-section {
+        margin-left: 30px;
+        margin-top: 10px;
+        border-left: 3px solid #eee;
+        padding-left: 15px;
+    }
+
+    /* Modal styling for chat */
+    .chat-modal textarea {
+        resize: none;
+    }
+</style>
+
+<!-- Chat Modal -->
+<div class="modal fade" id="chatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chatModalTitle">Start Chat with Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Student:</label>
+                    <input type="text" id="chatStudentName" class="form-control" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Message:</label>
+                    <textarea id="chatMessage" class="form-control" rows="4"
+                              placeholder="Type your message here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="sendChatMessageBtn" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-1"></i> Send & Start Chat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold">@lesson.Title</h1>
+            <p class="text-muted mb-0">
+                <i class="fas fa-book me-1"></i> @course.Title •
+                <i class="fas fa-clock me-1"></i> @lesson.DurationMinutes min •
+                Lesson @lesson.Order
+            </p>
+        </div>
+        <div>
+            <a asp-action="EditLesson" asp-route-id="@lesson.Id" class="btn btn-warning">
+                <i class="fas fa-edit me-1"></i> Edit
+            </a>
+            <a asp-action="Lessons" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Video Section -->
+            @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+            {
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-video me-2 text-danger"></i> Lesson Video
+                        </h5>
+                        <div class="ratio ratio-16x9">
+                            <video controls class="rounded" style="background: #000;">
+                                <source src="@lesson.VideoUrl" type="video/mp4">
+                                Your browser doesn't support HTML5 video.
+                            </video>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Description -->
+            @if (!string.IsNullOrEmpty(lesson.Description))
+            {
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-file-alt me-2 text-primary"></i> Description
+                        </h5>
+                        <div class="p-3 bg-light rounded">
+                            @Html.Raw(lesson.Description.Replace("\n", "<br>"))
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- PDF -->
+            @if (!string.IsNullOrEmpty(lesson.PdfUrl))
+            {
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-file-pdf me-2 text-danger"></i> Lesson Materials
+                        </h5>
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <i class="fas fa-file-pdf fa-3x text-danger me-3"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Lesson Notes PDF</h6>
+                                <div class="d-flex gap-2 mt-2">
+                                    <a href="@lesson.PdfUrl" target="_blank" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-eye me-1"></i> View
+                                    </a>
+                                    <a href="@lesson.PdfUrl" download class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Comments Section -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-comments me-2"></i> Discussion
+                            <span class="badge bg-primary">@Model.Comments.Count</span>
+                        </h5>
+                        <button id="refreshCommentsBtn" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+
+                    <!-- Add Comment Form -->
+                    <div class="mb-4">
+                        <form id="addCommentForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="lessonId" value="@lesson.Id" />
+                            <div class="mb-3">
+                                <textarea name="content" id="commentContent"
+                                          class="form-control" rows="3"
+                                          placeholder="Add your comment..." required></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary" id="submitCommentBtn">
+                                    <i class="fas fa-paper-plane me-1"></i> Post Comment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div id="commentsContainer">
+                        @if (Model.Comments.Any())
+                        {
+                            @foreach (var comment in Model.Comments)
+                            {
+                                <div class="teacher-comment" data-comment-id="@comment.Id">
+                                    <div class="teacher-comment-header">
+                                        <div class="teacher-comment-user">
+                                            <img src="@comment.UserProfileImage"
+                                                 alt="@comment.UserName"
+                                                 class="teacher-comment-avatar">
+                                            <div>
+                                                <strong>@comment.UserName</strong>
+                                                @if (comment.IsTeacher)
+                                                {
+                                                    <span class="badge bg-primary ms-1">Teacher</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success ms-1">Student</span>
+                                                    <button class="teacher-chat-btn ms-2 chat-with-student-btn"
+                                                            data-student-id="@comment.UserId"
+                                                            data-student-name="@comment.UserName">
+                                                        <i class="fas fa-comment"></i> Chat
+                                                    </button>
+                                                }
+                                                <div class="small text-muted">@comment.TimeAgo</div>
+                                            </div>
+                                        </div>
+
+                                        @if (comment.CanDelete)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger delete-comment-btn"
+                                                    data-comment-id="@comment.Id">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+
+                                    <div class="teacher-comment-content mb-3">
+                                        @Html.Raw(comment.Content.Replace("\n", "<br>"))
+                                    </div>
+
+                                    <!-- Replies -->
+                                    @if (comment.Replies.Any())
+                                    {
+                                        <div class="teacher-reply-section">
+                                            @foreach (var reply in comment.Replies)
+                                            {
+                                                <div class="teacher-comment" style="background: #f9f9f9; margin-bottom: 10px;">
+                                                    <div class="teacher-comment-user">
+                                                        <img src="@reply.UserProfileImage"
+                                                             alt="@reply.UserName"
+                                                             style="width: 30px; height: 30px;">
+                                                        <div>
+                                                            <strong>@reply.UserName</strong>
+                                                            <div class="small text-muted">@reply.TimeAgo</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-2">@reply.Content</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <!-- Reply Form -->
+                                    <div class="mt-3">
+                                        <form class="add-reply-form" data-comment-id="@comment.Id">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control"
+                                                       placeholder="Write a reply..." required>
+                                                <button type="submit" class="btn btn-outline-primary">
+                                                    <i class="fas fa-reply"></i>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No comments yet. Start the discussion!</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Course Info -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle me-2"></i> Course Info
+                    </h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Course:</strong></td>
+                            <td>@course.Title</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Subject:</strong></td>
+                            <td>@course.Subject?.Name</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Level:</strong></td>
+                            <td><span class="badge bg-info">@course.Level</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                @if (course.IsPublished)
+                                {
+                                    <span class="badge bg-success">Published</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">Draft</span>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Students -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-users me-2"></i> Enrolled Students
+                        <span class="badge bg-secondary">@Model.TotalStudents</span>
+                    </h5>
+                    <div class="list-group">
+                        @foreach (var student in Model.EnrolledStudents.Take(5))
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex align-items-center">
+                                    <img src="@(student.ProfileImageUrl ?? "/images/avatar.png")"
+                                         alt="@student.FullName"
+                                         style="width: 35px; height: 35px; border-radius: 50%;"
+                                         class="me-3">
+                                    <div class="flex-grow-1">
+                                        <strong>@student.FullName</strong>
+                                        <div class="small text-muted">@student.Email</div>
+                                    </div>
+                                    <button class="btn btn-sm btn-success chat-with-student-btn"
+                                            data-student-id="@student.Id"
+                                            data-student-name="@student.FullName">
+                                        <i class="fas fa-comment"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lessons List -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-list-ol me-2"></i> Course Lessons
+                    </h5>
+                    <div class="list-group">
+                        @foreach (var courseLesson in Model.CourseLessons.OrderBy(l => l.Order))
+                        {
+                            <a asp-action="LessonDetails" asp-route-id="@courseLesson.Id"
+                               class="list-group-item list-group-item-action @(courseLesson.Id == lesson.Id ? "active" : "")">
+                                <div class="d-flex justify-content-between">
+                                    <span>@courseLesson.Title</span>
+                                    <span class="badge bg-light text-dark">@courseLesson.DurationMinutes min</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const lessonId = @lesson.Id;
+            let currentStudentId = null;
+            let currentStudentName = null;
+
+            // ========== CHAT MODAL ==========
+            $(document).on('click', '.chat-with-student-btn', function () {
+                currentStudentId = $(this).data('student-id');
+                currentStudentName = $(this).data('student-name');
+
+                $('#chatStudentName').val(currentStudentName);
+                $('#chatMessage').val('');
+                $('#chatMessage').focus();
+
+                const modal = new bootstrap.Modal(document.getElementById('chatModal'));
+                modal.show();
+            });
+
+            // ========== SEND CHAT MESSAGE ==========
+            $('#sendChatMessageBtn').click(function () {
+                const message = $('#chatMessage').val().trim();
+                if (!message) {
+                    showToast('Please enter a message', 'warning');
+                    return;
+                }
+
+                const btn = $(this);
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Sending...');
+
+                $.ajax({
+                    url: '/Teacher/StartChatWithStudent',
+                    type: 'POST',
+                    data: {
+                        studentId: currentStudentId,
+                        initialMessage: message,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // إخفاء المودال
+                            bootstrap.Modal.getInstance(document.getElementById('chatModal')).hide();
+                            showToast('Chat started successfully!', 'success');
+
+                            // التوجيه لصفحة المحادثات بعد 1 ثانية
+                            setTimeout(() => {
+                                if (response.redirect) {
+                                    window.location.href = response.redirect;
+                                } else if (response.chatId) {
+                                    window.location.href = '/Teacher/TeacherChatDetails/' + response.chatId;
+                                }
+                            }, 1000);
+                        } else {
+                            showToast(response.message || 'Error starting chat', 'danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Error:', xhr);
+                        showToast('Error: ' + xhr.statusText, 'danger');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="fas fa-paper-plane me-1"></i> Send & Start Chat');
+                    }
+                });
+            });
+
+            // Allow Enter key to send message (Shift+Enter for new line)
+            $('#chatMessage').keydown(function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    $('#sendChatMessageBtn').click();
+                }
+            });
+
+            // ========== ADD COMMENT ==========
+            $('#addCommentForm').submit(function (e) {
+                e.preventDefault();
+
+                const content = $('#commentContent').val().trim();
+                if (!content) {
+                    showToast('Please enter a comment', 'warning');
+                    return;
+                }
+
+                const btn = $('#submitCommentBtn');
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Posting...');
+
+                $.ajax({
+                    url: '/Teacher/AddTeacherComment',
+                    type: 'POST',
+                    data: {
+                        lessonId: lessonId,
+                        content: content,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        console.log('Response:', response);
+                        if (response.success) {
+                            $('#commentContent').val('');
+                            showToast('Comment added successfully!', 'success');
+                            location.reload(); // إعادة تحميل الصفحة
+                        } else {
+                            showToast(response.message || 'Error adding comment', 'danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Error:', xhr);
+                        showToast('Error: ' + xhr.statusText, 'danger');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html('<i class="fas fa-paper-plane me-1"></i> Post Comment');
+                    }
+                });
+            });
+
+            // ========== DELETE COMMENT ==========
+            $(document).on('click', '.delete-comment-btn', function () {
+                const commentId = $(this).data('comment-id');
+
+                if (!confirm('Are you sure you want to delete this comment?')) {
+                    return;
+                }
+
+                $.post('/Teacher/DeleteTeacherComment', {
+                    id: commentId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                })
+                    .then(response => {
+                        if (response.success) {
+                            showToast('Comment deleted', 'success');
+                            $(`[data-comment-id="${commentId}"]`).remove();
+                        } else {
+                            showToast(response.message || 'Error deleting comment', 'danger');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        showToast('Error deleting comment', 'danger');
+                    });
+            });
+
+            // ========== ADD REPLY ==========
+            $(document).on('submit', '.add-reply-form', function (e) {
+                e.preventDefault();
+                const form = $(this);
+                const commentId = form.data('comment-id');
+                const content = form.find('input[type="text"]').val().trim();
+
+                if (!content) return;
+
+                $.post('/Teacher/AddTeacherReply', {
+                    commentId: commentId,
+                    content: content,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                })
+                    .then(response => {
+                        if (response.success) {
+                            form.find('input[type="text"]').val('');
+                            showToast('Reply added!', 'success');
+                            location.reload();
+                        } else {
+                            showToast(response.message || 'Error adding reply', 'danger');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        showToast('Error adding reply', 'danger');
+                    });
+            });
+
+            // ========== REFRESH COMMENTS ==========
+            $('#refreshCommentsBtn').click(function () {
+                location.reload();
+            });
+
+            // ========== HELPER FUNCTIONS ==========
+            function showToast(message, type = 'info') {
+                // إنشاء toast
+                const toastHtml = `
+                            <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        <i class="fas fa-${type === 'success' ? 'check-circle' :
+                        type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                                        ${message}
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                </div>
+                            </div>
+                        `;
+
+                const toast = $(toastHtml).appendTo('.toast-container');
+                const bsToast = new bootstrap.Toast(toast[0]);
+                bsToast.show();
+
+                setTimeout(() => toast.remove(), 3000);
+            }
+        });
+    </script>
+}

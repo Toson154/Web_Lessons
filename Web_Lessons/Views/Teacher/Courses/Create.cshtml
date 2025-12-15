@@ -1,0 +1,125 @@
+﻿@model Web_Lessons.ViewModels.CreateCourseViewModel
+@{
+    ViewData["Title"] = "Create New Course";
+    Layout = "_TeacherLayout";
+
+    // Check if ViewBag.Subjects exists
+    var subjectsList = ViewBag.Subjects as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+}
+
+<div class="content-card">
+    <h4>Create New Course</h4>
+    <hr />
+
+    @if (!subjectsList.Any())
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            You must create a subject first before you can create courses.
+            <a asp-action="CreateSubject" class="alert-link">Create your first subject</a>
+        </div>
+
+        <div class="mt-3">
+            <a asp-action="Subjects" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Subjects
+            </a>
+        </div>
+    }
+    else
+    {
+        <form asp-action="CreateCourse" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="SubjectId" class="form-label">Subject</label>
+                        <select asp-for="SubjectId" class="form-control"
+                            asp-items="subjectsList">
+                            <option value="">-- Select Subject --</option>
+                        </select>
+                        <span asp-validation-for="SubjectId" class="text-danger"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Level" class="form-label">Course Level</label>
+                                <select asp-for="Level" class="form-control">
+                                    <option value="">-- Select Level --</option>
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                </select>
+                                <span asp-validation-for="Level" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mt-4">
+                                <div class="form-check">
+                                    <input asp-for="IsPublished" class="form-check-input" />
+                                    <label asp-for="IsPublished" class="form-check-label">Publish Course</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label asp-for="ThumbnailFile" class="form-label">Course Thumbnail</label>
+                        <input asp-for="ThumbnailFile" type="file" class="form-control"
+                               accept="image/*" id="thumbnailInput" />
+                        <small class="form-text text-muted">Recommended: 600x400px, JPEG/PNG</small>
+                        <span asp-validation-for="ThumbnailFile" class="text-danger"></span>
+
+                        <!-- Preview -->
+                        <div class="mt-2">
+                            <img id="thumbnailPreview" src="/images/default-course.jpg"
+                                 class="img-thumbnail" style="max-width: 100%; height: auto;"
+                                 alt="Thumbnail Preview" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Create Course
+                </button>
+                <a asp-action="Courses" class="btn btn-secondary ms-2">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Courses
+                </a>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Thumbnail preview
+            $('#thumbnailInput').change(function () {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#thumbnailPreview').attr('src', e.target.result);
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        });
+    </script>
+}

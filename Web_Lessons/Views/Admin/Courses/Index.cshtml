@@ -1,0 +1,101 @@
+﻿@model IEnumerable<Web_Lessons.Models.Course>
+@{
+    Layout = "_TeacherLayout";
+    ViewData["Title"] = "My Courses";
+    ViewData["Description"] = "Manage your teaching courses";
+
+    var subjectId = ViewBag.SubjectId as int?;
+    var subjectName = ViewBag.SubjectName as string;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4>My Courses (@Model.Count())</h4>
+        @if (!string.IsNullOrEmpty(subjectName))
+        {
+            <p class="text-muted mb-0">Filtered by: <strong>@subjectName</strong></p>
+        }
+    </div>
+    <div>
+        @if (subjectId.HasValue)
+        {
+            <a asp-action="CreateCourse" asp-route-subjectId="@subjectId" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Add Course to This Subject
+            </a>
+        }
+        else
+        {
+            <a asp-action="CreateCourse" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Add New Course
+            </a>
+        }
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        No courses found.
+        @if (subjectId.HasValue)
+        {
+            <a asp-action="CreateCourse" asp-route-subjectId="@subjectId" class="alert-link">Create your first course for this subject</a>
+        }
+        else
+        {
+            <a asp-action="CreateCourse" class="alert-link">Create your first course</a>
+        }
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Subject</th>
+                    <th>Level</th>
+                    <th>Lessons</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var course in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@course.Title</strong>
+                            @if (!string.IsNullOrEmpty(course.Description))
+                            {
+                                <div class="text-muted small">@course.Description</div>
+                            }
+                        </td>
+                        <td>@course.Subject?.Name</td>
+                        <td>
+                            <span class="badge bg-info">@course.Level</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">@course.Lessons?.Count() Lessons</span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Lessons" asp-route-courseId="@course.Id"
+                                   class="btn btn-outline-primary" title="View Lessons">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a asp-action="CreateLesson" asp-route-courseId="@course.Id"
+                                   class="btn btn-outline-success" title="Add Lesson">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                                <a asp-action="EditLesson" asp-route-courseId="@course.Id href="#" class="btn btn-outline-secondary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

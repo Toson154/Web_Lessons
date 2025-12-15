@@ -1,0 +1,1032 @@
+﻿@model Web_Lessons.ViewModels.TeacherDashboardViewModel
+@{
+    Layout = "_TeacherLayout";
+    ViewData["Title"] = "Teacher Dashboard";
+    ViewData["Description"] = "Manage your subjects, courses, and students";
+}
+
+<!-- Dashboard Styles -->
+@section Styles {
+    <style>
+        .dashboard-stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border-top: 4px solid;
+            height: 100%;
+            position: relative;
+        }
+
+            .dashboard-stat-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            }
+
+            .dashboard-stat-card.static-data {
+                border-left: 4px solid #3498db;
+            }
+
+            .dashboard-stat-card.dynamic-data {
+                border-left: 4px solid #2ecc71;
+            }
+
+        .stat-primary {
+            border-color: #3498db;
+        }
+
+        .stat-success {
+            border-color: #2ecc71;
+        }
+
+        .stat-warning {
+            border-color: #f39c12;
+        }
+
+        .stat-danger {
+            border-color: #e74c3c;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+            .stat-value .data-badge {
+                position: absolute;
+                top: -10px;
+                right: -10px;
+                background: #3498db;
+                color: white;
+                font-size: 0.7rem;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-weight: normal;
+            }
+
+            .stat-value .updated-badge {
+                background: #2ecc71;
+            }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .error-message {
+            background: #ffeaea;
+            border: 1px solid #ffcccc;
+            color: #d63031;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .activity-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid #eee;
+            padding-left: 1rem;
+            border-left: 3px solid transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .recent-student-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .course-progress-bar {
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .course-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .quick-action-btn {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border: 2px dashed #eee;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+            .quick-action-btn:hover {
+                background: #f8f9fa;
+                border-color: #3498db;
+                transform: translateY(-3px);
+            }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .data-source-info {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+            .data-source-info i {
+                margin-right: 0.3rem;
+            }
+
+        .last-updated {
+            font-size: 0.75rem;
+            color: #888;
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+
+        .refresh-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .refresh-btn:hover {
+                background: #e9ecef;
+                transform: rotate(30deg);
+            }
+
+        .auto-refresh-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: #95a5a6;
+        }
+    </style>
+}
+
+<div class="container-fluid">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="content-card bg-gradient-primary text-white">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-2">Welcome back, @Model.TeacherName!</h3>
+                        <p class="mb-0" id="welcomeMessage">Here's what's happening with your courses today.</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <span class="badge bg-white text-primary p-2">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            <span id="currentDate">@DateTime.Now.ToString("dddd, MMMM dd, yyyy")</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message Container -->
+    <div id="dashboardError" class="error-message">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <span id="errorText">Error loading dashboard data</span>
+        <button class="btn btn-sm btn-outline-light ms-3" onclick="loadDynamicContent()">
+            <i class="fas fa-redo me-1"></i> Retry
+        </button>
+    </div>
+
+    <!-- Stats Cards - Static Data from Model -->
+    <div class="row mb-4" id="staticStatsContainer">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-stat-card stat-primary static-data">
+                <div class="refresh-btn" onclick="loadDynamicContent()" title="Refresh dynamic content">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="stat-value">
+                    @Model.SubjectsCount
+                    <span class="data-badge" title="From server">S</span>
+                </div>
+                <p class="stat-label">Total Subjects</p>
+                <div class="data-source-info">
+                    <i class="fas fa-database"></i> Server data
+                </div>
+                <a asp-controller="Teacher" asp-action="Subjects" class="text-primary small text-decoration-none">
+                    View all <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-stat-card stat-success static-data">
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="stat-value">
+                    @Model.CoursesCount
+                    <span class="data-badge" title="From server">S</span>
+                </div>
+                <p class="stat-label">Total Courses</p>
+                <div class="data-source-info">
+                    <i class="fas fa-database"></i> Server data
+                </div>
+                <a asp-controller="Teacher" asp-action="Courses" class="text-success small text-decoration-none">
+                    Manage courses <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-stat-card stat-warning static-data">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="fas fa-video"></i>
+                </div>
+                <div class="stat-value">
+                    @Model.LessonsCount
+                    <span class="data-badge" title="From server">S</span>
+                </div>
+                <p class="stat-label">Total Lessons</p>
+                <div class="data-source-info">
+                    <i class="fas fa-database"></i> Server data
+                </div>
+                <a asp-controller="Teacher" asp-action="Lessons" class="text-warning small text-decoration-none">
+                    View lessons <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-stat-card stat-danger static-data">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">
+                    @Model.StudentsCount
+                    <span class="data-badge" title="From server">S</span>
+                </div>
+                <p class="stat-label">Total Students</p>
+                <div class="data-source-info">
+                    <i class="fas fa-database"></i> Server data
+                </div>
+                <a asp-controller="Teacher" asp-action="Students" class="text-danger small text-decoration-none">
+                    See students <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+                <div class="auto-refresh-indicator" id="autoRefreshStatus">
+                    <i class="fas fa-circle text-success"></i> Auto-refresh ON
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Left Column: Quick Actions & Recent Activity -->
+        <div class="col-lg-8">
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="content-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0">Quick Actions</h5>
+                            <span class="text-muted small">Updated: <span id="lastUpdatedTime">just now</span></span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-3 col-6">
+                                <a asp-action="CreateSubject" class="quick-action-btn d-block text-decoration-none">
+                                    <div class="mb-3">
+                                        <i class="fas fa-plus-circle fa-2x text-primary"></i>
+                                    </div>
+                                    <h6 class="mb-1">New Subject</h6>
+                                    <p class="text-muted small mb-0">Create a subject category</p>
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a asp-action="CreateCourse" class="quick-action-btn d-block text-decoration-none">
+                                    <div class="mb-3">
+                                        <i class="fas fa-plus-circle fa-2x text-success"></i>
+                                    </div>
+                                    <h6 class="mb-1">New Course</h6>
+                                    <p class="text-muted small mb-0">Add a new course</p>
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a asp-action="CreateLesson" class="quick-action-btn d-block text-decoration-none">
+                                    <div class="mb-3">
+                                        <i class="fas fa-plus-circle fa-2x text-warning"></i>
+                                    </div>
+                                    <h6 class="mb-1">New Lesson</h6>
+                                    <p class="text-muted small mb-0">Create a lesson</p>
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a asp-action="Students" class="quick-action-btn d-block text-decoration-none">
+                                    <div class="mb-3">
+                                        <i class="fas fa-users fa-2x text-danger"></i>
+                                    </div>
+                                    <h6 class="mb-1">View Students</h6>
+                                    <p class="text-muted small mb-0">See all students</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Performing Courses (Dynamic Content) -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="content-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0">Top Performing Courses</h5>
+                            <div>
+                                <span class="text-muted small me-3" id="coursesLastUpdated"></span>
+                                <a asp-action="Courses" class="btn btn-sm btn-outline-primary">
+                                    View All <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div id="topCoursesLoading" class="loading-spinner">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading course data...</p>
+                        </div>
+                        <div class="row" id="topCoursesList" style="display: none;">
+                            <!-- Will be loaded via AJAX -->
+                        </div>
+                        <div id="topCoursesError" class="error-message" style="display: none;">
+                            Failed to load courses data
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Recent Activity & Stats -->
+        <div class="col-lg-4">
+            <!-- Recent Activity (Dynamic Content) -->
+            <div class="content-card mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">Recent Activity</h5>
+                    <span class="badge bg-info" id="activityCount">0</span>
+                </div>
+                <div id="recentActivityLoading" class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading activities...</p>
+                </div>
+                <div id="recentActivityList" style="display: none;">
+                    <!-- Will be loaded via AJAX -->
+                </div>
+                <div id="recentActivityError" class="error-message" style="display: none;">
+                    Failed to load activity data
+                </div>
+            </div>
+
+            <!-- Quick Stats (Dynamic Content) -->
+            <div class="content-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">Quick Stats</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="loadDynamicContent()">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                <div id="quickStatsLoading" class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading stats...</p>
+                </div>
+                <div id="quickStatsContent" style="display: none;">
+                    <!-- Will be loaded via AJAX -->
+                </div>
+                <div id="quickStatsError" class="error-message" style="display: none;">
+                    Failed to load stats
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Students (Dynamic Content) -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="content-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="mb-0">Recent Student Enrollments</h5>
+                        <small class="text-muted" id="studentsUpdateInfo"></small>
+                    </div>
+                    <div>
+                        <span class="badge bg-warning me-2" id="totalStudentsCount">0 students</span>
+                        <a asp-action="Students" class="btn btn-sm btn-outline-primary">
+                            View All <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div id="recentStudentsLoading" class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading student data...</p>
+                </div>
+                <div id="recentStudentsError" class="error-message" style="display: none;">
+                    Failed to load student data
+                </div>
+                <div class="table-responsive" id="recentStudentsContainer" style="display: none;">
+                    <table class="table table-hover" id="recentStudentsTable">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Enrolled</th>
+                                <th>Progress</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentStudentsBody">
+                            <!-- Will be loaded via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // تعيين ألوان CSS مخصصة
+        const teacherColors = {
+            'primary': '#3498db',
+            'success': '#2ecc71',
+            'warning': '#f39c12',
+            'danger': '#e74c3c',
+            'info': '#1abc9c',
+            'secondary': '#95a5a6'
+        };
+
+        // متغيرات التتبع
+        let lastUpdateTime = new Date();
+        let autoRefreshInterval = null;
+        let isInitialLoad = true;
+        let refreshCount = 0;
+
+        $(document).ready(function () {
+            console.log("🏁 Dashboard fully loaded with initial data:");
+            console.log("📊 Subjects:", @Model.SubjectsCount);
+            console.log("🎓 Courses:", @Model.CoursesCount);
+            console.log("📹 Lessons:", @Model.LessonsCount);
+            console.log("👥 Students:", @Model.StudentsCount);
+            console.log("👋 Teacher:", "@Model.TeacherName");
+
+            // تحديث التاريخ الحالي
+            updateCurrentDate();
+
+            // تحميل المحتوى الديناميكي فقط
+            loadDynamicContent();
+
+            // تفعيل التحديث التلقائي كل 60 ثانية
+            startAutoRefresh(60000);
+
+            // تحديث رسالة الترحيب بناءً على الوقت
+            updateWelcomeMessage();
+        });
+
+        // تحميل المحتوى الديناميكي فقط (بدون لمس الإحصائيات الثابتة)
+        function loadDynamicContent() {
+            console.log("🔄 Loading DYNAMIC content only...");
+            refreshCount++;
+            
+            // إخفاء رسائل الخطأ السابقة
+            $('#dashboardError').hide();
+            $('.error-message').hide();
+
+            // إظهار مؤشرات التحميل للمحتوى الديناميكي
+            $('#topCoursesLoading, #recentActivityLoading, #quickStatsLoading, #recentStudentsLoading').show();
+            
+            // إخفاء المحتوى الديناميكي القديم
+            $('#topCoursesList, #recentActivityList, #quickStatsContent, #recentStudentsContainer').hide();
+
+            $.ajax({
+                url: '@Url.Action("GetDashboardStats", "Teacher")',
+                type: 'GET',
+                dataType: 'json',
+                cache: false, // منع الكاش
+                beforeSend: function() {
+                    console.log("📡 Sending AJAX request for dynamic content...");
+                },
+                success: function (response) {
+                    console.log("✅ Dynamic content response received:", response);
+                    lastUpdateTime = new Date();
+                    
+                    if (response.success && response.data) {
+                        // ✅ تحديث المحتوى الديناميكي فقط - لا نلمس الإحصائيات الأساسية
+                        updateRecentActivity(response.data.RecentActivity);
+                        updateTopCourses(response.data.TopCourses);
+                        updateRecentStudents(response.data.RecentStudents);
+                        updateQuickStats(response.data);
+                        
+                        // تحديث وقت آخر تحديث
+                        updateLastUpdatedTime();
+                        
+                        console.log("✨ Dynamic content updated successfully (refresh #" + refreshCount + ")");
+                        
+                        if (isInitialLoad) {
+                            toastr.success('Dashboard loaded successfully!');
+                            isInitialLoad = false;
+                        }
+                    } else {
+                        console.warn("⚠️ Failed to load dynamic content:", response.message);
+                        showSectionError('topCoursesError', 'Failed to load courses data');
+                        showSectionError('recentActivityError', 'Failed to load activity data');
+                        showSectionError('recentStudentsError', 'Failed to load student data');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("❌ AJAX Error:", error);
+                    console.error("Status:", status);
+                    
+                    // إظهار رسالة خطأ محددة
+                    showError('Connection error. Please check your internet connection.');
+                    
+                    // إخفاء مؤشرات التحميل
+                    hideAllLoaders();
+                    
+                    // إظهار المحتوى القديم إذا كان موجوداً
+                    $('#topCoursesList, #recentActivityList, #quickStatsContent, #recentStudentsContainer').show();
+                },
+                complete: function () {
+                    // إخفاء جميع مؤشرات التحميل
+                    hideAllLoaders();
+                }
+            });
+        }
+
+        // إخفاء جميع مؤشرات التحميل
+        function hideAllLoaders() {
+            $('#topCoursesLoading, #recentActivityLoading, #quickStatsLoading, #recentStudentsLoading').hide();
+        }
+
+        // إظهار خطأ لقسم محدد
+        function showSectionError(sectionId, message) {
+            $('#' + sectionId).text(message).show();
+        }
+
+        // إظهار رسالة خطأ عامة
+        function showError(message) {
+            $('#errorText').text(message);
+            $('#dashboardError').show();
+            
+            if (typeof toastr !== 'undefined') {
+                toastr.error(message, 'Error', { timeOut: 5000 });
+            }
+        }
+
+        // تحديث النشاط الأخير
+        function updateRecentActivity(activities) {
+            const container = $('#recentActivityList');
+            const countBadge = $('#activityCount');
+            
+            container.empty();
+            
+            if (activities && activities.length > 0) {
+                countBadge.text(activities.length);
+                
+                activities.forEach(function (activity, index) {
+                    const date = new Date(activity.Date || activity.date || new Date());
+                    const timeAgo = getTimeAgo(date);
+                    const color = activity.Color || activity.color || 'primary';
+                    const icon = activity.Icon || activity.icon || 'fas fa-circle';
+                    const title = activity.Title || activity.title || 'Activity';
+                    const description = activity.Description || activity.description || '';
+                    
+                    const activityHtml = `
+                        <div class="activity-item" style="border-left-color: ${teacherColors[color] || teacherColors.primary}">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    <i class="${icon} fa-lg" style="color: ${teacherColors[color] || teacherColors.primary}"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">${title}</h6>
+                                    <p class="text-muted small mb-1">${description}</p>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-1"></i>${timeAgo}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.append(activityHtml);
+                });
+                
+                $('#recentActivityError').hide();
+            } else {
+                container.html(`
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No recent activity</p>
+                        <small class="text-muted">Activities will appear here as they happen</small>
+                    </div>
+                `);
+                countBadge.text('0');
+            }
+            
+            container.show();
+        }
+
+        // تحديث أفضل الدورات
+        function updateTopCourses(courses) {
+            const container = $('#topCoursesList');
+            const lastUpdated = $('#coursesLastUpdated');
+            
+            container.empty();
+            
+            if (courses && courses.length > 0) {
+                courses.forEach(function (course) {
+                    const progress = course.Progress || course.progress || 0;
+                    const progressColor = progress >= 70 ? 'success' :
+                                          progress >= 40 ? 'warning' : 'danger';
+                    const thumbnailUrl = course.ThumbnailUrl || course.thumbnailUrl || '/images/default-course.jpg';
+                    const title = course.Title || course.title || 'Untitled Course';
+                    const subjectName = course.SubjectName || course.subjectName || 'General';
+                    const studentCount = course.StudentCount || course.studentCount || 0;
+                    const lessonCount = course.LessonCount || course.lessonCount || 0;
+                    const courseId = course.Id || course.id || 0;
+                    
+                    const courseHtml = `
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start mb-3">
+                                        <img src="${thumbnailUrl}"
+                                             alt="${title}"
+                                             class="rounded me-3"
+                                             style="width: 60px; height: 60px; object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-1">${title}</h6>
+                                            <small class="text-muted">${subjectName}</small>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Students</small>
+                                            <strong>${studentCount}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Lessons</small>
+                                            <strong>${lessonCount}</strong>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block mb-1">Progress</small>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1 me-2">
+                                                <div class="course-progress-bar">
+                                                    <div class="course-progress-fill bg-${progressColor}"
+                                                         style="width: ${progress}%"></div>
+                                                </div>
+                                            </div>
+                                            <small class="text-${progressColor}">${progress}%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent border-top-0">
+                                    <a href="/Teacher/Courses?courseId=${courseId}"
+                                       class="btn btn-sm btn-outline-primary w-100">
+                                        <i class="fas fa-eye me-1"></i> View Course
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.append(courseHtml);
+                });
+                
+                lastUpdated.text('Updated: ' + getTimeAgo(new Date()));
+                $('#topCoursesError').hide();
+            } else {
+                container.html(`
+                    <div class="col-12">
+                        <div class="text-center py-4">
+                            <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No courses data available</p>
+                            <a href="/Teacher/CreateCourse" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> Create Your First Course
+                            </a>
+                        </div>
+                    </div>
+                `);
+                lastUpdated.text('No data');
+            }
+            
+            container.show();
+        }
+
+        // تحديث الطلاب الجدد
+        function updateRecentStudents(enrollments) {
+            const container = $('#recentStudentsBody');
+            const totalCount = $('#totalStudentsCount');
+            const updateInfo = $('#studentsUpdateInfo');
+            
+            container.empty();
+            
+            if (enrollments && enrollments.length > 0) {
+                totalCount.text(enrollments.length + ' recent');
+                updateInfo.text('Last 30 days');
+                
+                enrollments.forEach(function (enrollment) {
+                    const progress = enrollment.Progress || enrollment.progress || 0;
+                    const studentName = enrollment.StudentName || enrollment.studentName || 'Unknown Student';
+                    const studentEmail = enrollment.StudentEmail || enrollment.studentEmail || '';
+                    const profileImage = enrollment.ProfileImageUrl || enrollment.profileImageUrl || '/images/avatar.png';
+                    const courseTitle = enrollment.CourseTitle || enrollment.courseTitle || 'Unknown Course';
+                    const enrolledDate = enrollment.EnrolledDate || enrollment.enrolledDate || 'N/A';
+                    const studentId = enrollment.StudentId || enrollment.studentId || '';
+                    
+                    const row = `
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="${profileImage}"
+                                         class="recent-student-avatar me-2"
+                                         alt="${studentName}">
+                                    <div>
+                                        <strong>${studentName}</strong>
+                                        <div class="text-muted small">${studentEmail}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${courseTitle}</td>
+                            <td>${enrolledDate}</td>
+                            <td>
+                                <span class="badge ${progress > 0 ? 'bg-info' : 'bg-secondary'}">
+                                    ${progress > 0 ? `${progress} lessons` : 'Just enrolled'}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="/Chat/CreateNew?teacherId=${studentId}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-comment"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                    container.append(row);
+                });
+                
+                $('#recentStudentsError').hide();
+                $('#recentStudentsContainer').show();
+            } else {
+                container.html(`
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No recent student enrollments</p>
+                            <small class="text-muted">New enrollments will appear here</small>
+                        </td>
+                    </tr>
+                `);
+                totalCount.text('0 students');
+                updateInfo.text('No recent data');
+                $('#recentStudentsContainer').show();
+            }
+        }
+
+        // تحديث الإحصائيات السريعة
+        function updateQuickStats(data) {
+            const container = $('#quickStatsContent');
+            
+            // حسابات بسيطة للإحصائيات
+            const completionRate = data.PublishedCourses > 0 ? 
+                Math.round((data.PublishedCourses / (data.CoursesCount || 1)) * 100) : 0;
+            
+            const engagementRate = data.StudentsCount > 0 ? 
+                Math.min(100, Math.round((data.StudentsCount / 100) * 100)) : 0;
+            
+            const activityRate = data.RecentActivity ? 
+                Math.min(100, data.RecentActivity.length * 10) : 0;
+            
+            const quickStatsHtml = `
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-check-circle text-success me-2"></i>Course Completion</span>
+                        <span class="fw-bold">${completionRate}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: ${completionRate}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-chart-line text-warning me-2"></i>Student Engagement</span>
+                        <span class="fw-bold">${engagementRate}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: ${engagementRate}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-bolt text-info me-2"></i>Recent Activity</span>
+                        <span class="fw-bold">${activityRate}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: ${activityRate}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 pt-3 border-top">
+                    <small class="text-muted d-block mb-2">Dashboard Performance</small>
+                    <div class="d-flex justify-content-between">
+                        <span>Refresh count:</span>
+                        <span class="badge bg-primary">${refreshCount}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <span>Last update:</span>
+                        <span class="text-muted">${getTimeAgo(lastUpdateTime)}</span>
+                    </div>
+                </div>
+            `;
+            
+            container.html(quickStatsHtml);
+            container.show();
+            $('#quickStatsError').hide();
+        }
+
+        // تحديث وقت آخر تحديث
+        function updateLastUpdatedTime() {
+            $('#lastUpdatedTime').text(getTimeAgo(lastUpdateTime));
+        }
+
+        // تحديث التاريخ الحالي
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            $('#currentDate').text(now.toLocaleDateString('en-US', options));
+        }
+
+        // تحديث رسالة الترحيب بناءً على الوقت
+        function updateWelcomeMessage() {
+            const hour = new Date().getHours();
+            let message = '';
+            
+            if (hour < 12) message = 'Good morning! Ready for a productive day?';
+            else if (hour < 17) message = 'Good afternoon! Hope your day is going well.';
+            else if (hour < 21) message = 'Good evening! Perfect time for some teaching.';
+            else message = 'Good night! Time to wrap up for today.';
+            
+            $('#welcomeMessage').text(message);
+        }
+
+        // بدء التحديث التلقائي
+        function startAutoRefresh(intervalMs) {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            autoRefreshInterval = setInterval(function() {
+                console.log("⏰ Auto-refreshing dynamic content...");
+                loadDynamicContent();
+            }, intervalMs);
+            
+            console.log("🔄 Auto-refresh started every " + (intervalMs/1000) + " seconds");
+        }
+
+        // إيقاف التحديث التلقائي
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log("⏹️ Auto-refresh stopped");
+                $('#autoRefreshStatus').html('<i class="fas fa-circle text-danger"></i> Auto-refresh OFF');
+            }
+        }
+
+        // Toggle auto-refresh
+        function toggleAutoRefresh() {
+            if (autoRefreshInterval) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh(60000);
+                $('#autoRefreshStatus').html('<i class="fas fa-circle text-success"></i> Auto-refresh ON');
+            }
+        }
+
+        // Helper function for time ago
+        function getTimeAgo(date) {
+            if (!date || isNaN(new Date(date).getTime())) return 'just now';
+            
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            
+            if (seconds < 60) return 'just now';
+            
+            const intervals = [
+                { label: 'year', seconds: 31536000 },
+                { label: 'month', seconds: 2592000 },
+                { label: 'day', seconds: 86400 },
+                { label: 'hour', seconds: 3600 },
+                { label: 'minute', seconds: 60 }
+            ];
+            
+            for (const interval of intervals) {
+                const count = Math.floor(seconds / interval.seconds);
+                if (count >= 1) {
+                    return count === 1 ? `1 ${interval.label} ago` : `${count} ${interval.label}s ago`;
+                }
+            }
+            
+            return 'just now';
+        }
+
+        // إضافة toastr للإشعارات
+        if (typeof toastr !== 'undefined') {
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+        }
+
+        // إضافة event listeners للأزرار
+        $(document).on('click', '.refresh-btn', function() {
+            $(this).addClass('rotating');
+            setTimeout(() => $(this).removeClass('rotating'), 500);
+        });
+
+        // إضافة CSS للدوران
+        const style = document.createElement('style');
+        style.textContent = `
+            .rotating {
+                animation: rotate 0.5s linear;
+            }
+            @@keyframes rotate {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+    
+    <!-- Add toastr for notifications -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+}

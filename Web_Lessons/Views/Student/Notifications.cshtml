@@ -1,0 +1,175 @@
+﻿@model IEnumerable<Web_Lessons.Models.Course>
+@{
+    Layout = "_StudentLayout";
+    ViewData["Title"] = "Browse Courses";
+
+    var subjects = ViewBag.Subjects as List<Web_Lessons.Models.Subject>;
+    var levels = ViewBag.Levels as List<string>;
+    var enrolledCourseIds = ViewBag.EnrolledCourseIds as List<int> ?? new List<int>();
+}
+
+<div class="row">
+    <!-- Filters -->
+    <div class="col-md-3">
+        <div class="content-card">
+            <h5>Filters</h5>
+            <form method="get" id="filterForm">
+                <div class="mb-3">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Search courses..." value="@ViewBag.Search">
+                </div>
+                <div class="mb-3">
+                    <select name="level" class="form-select">
+                        <option value="">All Levels</option>
+                        @foreach (var level in levels ?? new List<string>())
+                        {
+                            <option value="@level" selected="@(level == ViewBag.Level)">@level</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <select name="subjectId" class="form-select">
+                        <option value="">All Subjects</option>
+                        @foreach (var subject in subjects ?? new List<Web_Lessons.Models.Subject>())
+                        {
+                            <option value="@subject.Id" selected="@(subject.Id == ViewBag.SubjectId)">@subject.Name</option>
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Courses -->
+    <div class="col-md-9">
+        <div class="content-card mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4>Available Courses (@Model.Count())</h4>
+                <a asp-action="MyCourses" class="btn btn-outline-primary">
+                    My Courses (@enrolledCourseIds.Count)
+                </a>
+            </div>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="content-card text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5>No courses found</h5>
+                <a asp-action="BrowseCourses" class="btn btn-primary mt-3">Clear Filters</a>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var course in Model)
+                {
+                    var isEnrolled = enrolledCourseIds.Contains(course.Id);
+
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <img src="@(course.ThumbnailUrl ?? "/images/default-course.jpg")"
+                                 class="card-img-top" style="height: 150px; object-fit: cover;">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">@course.Title</h5>
+                                <p class="card-text small text-muted">
+                                    @(course.Description?.Length > 100 ?
+                                        course.Description.Substring(0, 100) + "..." : course.Description)
+                                </p>
+
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span class="badge bg-info">@course.Level</span>
+                                        <span class="text-muted">
+                                            <i class="fas fa-video"></i> @(course.Lessons?.Count ?? 0)
+                                        </span>
+                                    </div>
+
+                                    @if (isEnrolled)
+                                    {
+                                        <a asp-controller="Student" asp-action="CourseDetails"
+                               asp-route-id="@course.Id" class="btn btn-success w-100">
+                                            <i class="fas fa-play me-1"></i> Continue Learning
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-primary w-100 enroll-btn"
+                                                data-course-id="@course.Id"
+                                                data-course-title="@course.Title">
+                                            <i class="fas fa-plus-circle me-1"></i> Enroll Now
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Enrollment with AJAX
+            $('.enroll-btn').click(function () {
+                const btn = $(this);
+                const courseId = btn.data('course-id');
+                const courseTitle = btn.data('course-title');
+
+                btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Enrolling...');
+                btn.prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("Enroll", "Student")',
+                    type: 'POST',
+                    data: {
+                        courseId: courseId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            showToast(`Successfully enrolled in "${courseTitle}"!`, 'success');
+                            // Update button
+                            btn.html('<i class="fas fa-play me-1"></i> Continue Learning');
+                            btn.removeClass('btn-primary').addClass('btn-success');
+                            btn.off('click');
+                            btn.click(function () {
+                                window.location.href = `/Student/CourseDetails/${courseId}`;
+                            });
+                        } else {
+                            showToast(response.message, 'danger');
+                            btn.html('<i class="fas fa-plus-circle me-1"></i> Enroll Now');
+                            btn.prop('disabled', false);
+                        }
+                    },
+                    error: function () {
+                        showToast('Error enrolling in course', 'danger');
+                        btn.html('<i class="fas fa-plus-circle me-1"></i> Enroll Now');
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+
+            function showToast(message, type) {
+                const toast = $(`
+                            <div class="toast align-items-center text-white bg-${type} border-0">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'} me-2"></i>
+                                        ${message}
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                </div>
+                            </div>
+                        `);
+
+                $('.toast-container').append(toast);
+                new bootstrap.Toast(toast[0]).show();
+            }
+        });
+    </script>
+}

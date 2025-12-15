@@ -1,0 +1,248 @@
+﻿@model Web_Lessons.ViewModels.EditCourseViewModel
+@{
+
+    ViewData["Title"] = "Edit Course";
+    Layout = "_TeacherLayout";
+
+    var subjects = ViewBag.Subjects as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var levels = ViewBag.Levels as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="content-card">
+            <h4 class="mb-4">Edit Course</h4>
+
+            <form asp-action="EditCourse" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="ExistingThumbnailUrl" />
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">Course Information</h6>
+
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label asp-for="Title" class="form-label">Course Title *</label>
+                                    <input asp-for="Title" class="form-control" placeholder="Enter course title" />
+                                    <span asp-validation-for="Title" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-12 mb-3">
+                                    <label asp-for="Description" class="form-label">Description</label>
+                                    <textarea asp-for="Description" class="form-control" rows="4"
+                                              placeholder="Enter course description (optional)"></textarea>
+                                    <span asp-validation-for="Description" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Level" class="form-label">Level *</label>
+                                    <select asp-for="Level" asp-items="levels" class="form-select">
+                                        <option value="">-- Select Level --</option>
+                                    </select>
+                                    <span asp-validation-for="Level" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="SubjectId" class="form-label">Subject *</label>
+                                    <select asp-for="SubjectId" asp-items="subjects" class="form-select">
+                                        <option value="">-- Select Subject --</option>
+                                    </select>
+                                    <span asp-validation-for="SubjectId" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-12 mb-3">
+                                    <div class="form-check">
+                                        <input asp-for="IsPublished" class="form-check-input" />
+                                        <label asp-for="IsPublished" class="form-check-label">
+                                            Publish this course
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Published courses are visible to students</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thumbnail Section -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">Course Thumbnail</h6>
+
+                            @if (!string.IsNullOrEmpty(Model.ExistingThumbnailUrl))
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">Current Thumbnail:</label>
+                                    <div class="mt-2">
+                                        <img src="@Model.ExistingThumbnailUrl"
+                                             class="img-thumbnail mb-2"
+                                             style="max-width: 200px; border-radius: 8px;"
+                                             alt="Current thumbnail" />
+                                        <div class="text-muted small">
+                                            Current image will be replaced if you upload a new one
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <label asp-for="ThumbnailFile" class="form-label">Upload New Thumbnail</label>
+                                <input asp-for="ThumbnailFile" type="file" class="form-control" accept="image/*" />
+                                <small class="text-muted">Recommended size: 800x450px (max 5MB)</small>
+                                <span asp-validation-for="ThumbnailFile" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="ThumbnailUrl" class="form-label">Or Enter Image URL</label>
+                                <input asp-for="ThumbnailUrl" class="form-control"
+                                       placeholder="https://example.com/image.jpg" />
+                                <small class="text-muted">Provide a direct image URL</small>
+                                <span asp-validation-for="ThumbnailUrl" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <!-- Actions Panel -->
+                        <div class="content-card mb-4">
+                            <h6 class="mb-3">Actions</h6>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+
+                                <a asp-action="Courses" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Courses
+                                </a>
+
+                                <a asp-action="Lessons" asp-route-courseId="@Model.Id"
+                                   class="btn btn-outline-success">
+                                    <i class="fas fa-video me-2"></i>Manage Lessons
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Quick Tips -->
+                        <div class="content-card">
+                            <h6 class="mb-3">Tips</h6>
+                            <ul class="small text-muted mb-0">
+                                <li class="mb-2">Use clear and descriptive titles</li>
+                                <li class="mb-2">Choose appropriate level for your audience</li>
+                                <li class="mb-2">High-quality thumbnails attract more students</li>
+                                <li>Publish only when course is ready for students</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .content-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.6rem 0.75rem;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #4361ee;
+            box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+        }
+
+    .form-check-input:checked {
+        background-color: #4361ee;
+        border-color: #4361ee;
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+    }
+
+    .img-thumbnail {
+        border: 2px solid #dee2e6;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        console.log("Edit Course page loaded");
+
+        // Form validation
+        $('form').on('submit', function () {
+            const submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+        });
+
+        // File size validation for thumbnail
+        $('#ThumbnailFile').on('change', function () {
+            const file = this.files[0];
+            if (file) {
+                const fileSize = file.size / 1024 / 1024; // in MB
+                if (fileSize > 5) {
+                    alert('Image file size must be less than 5MB');
+                    $(this).val('');
+                }
+            }
+        });
+
+        // Show toast notifications
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <text>showToast('@TempData["SuccessMessage"]', 'success'); </text>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <text>showToast('@TempData["ErrorMessage"]', 'danger'); </text>
+    }
+        });
+
+    function showToast(message, type = 'info') {
+        const icon = {
+            'success': 'check-circle',
+            'danger': 'exclamation-circle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle'
+        }[type] || 'info-circle';
+
+        const toast = $(`
+                <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas fa-${icon} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+
+        // Create toast container if doesn't exist
+        if ($('.toast-container').length === 0) {
+            $('body').append('<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>');
+        }
+
+        $('.toast-container').append(toast);
+        const bsToast = new bootstrap.Toast(toast[0]);
+        bsToast.show();
+    }
+</script>

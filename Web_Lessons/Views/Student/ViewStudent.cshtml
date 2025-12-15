@@ -1,0 +1,151 @@
+﻿@model Web_Lessons.ViewModels.TeacherStudentViewModel
+@{
+    Layout = "_TeacherLayout";
+    ViewData["Title"] = "Student Details";
+    ViewData["Description"] = "View student information and progress";
+}
+
+<div class="row mb-4">
+    <!-- Student Profile -->
+    <div class="col-md-12">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex align-items-center">
+                    @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                    {
+                        <img src="@Model.ProfileImageUrl" alt="@Model.StudentName"
+                             class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                             style="width: 80px; height: 80px; font-size: 2rem;">
+                            @Model.StudentName?[0]
+                        </div>
+                    }
+                    <div>
+                        <h3 class="mb-1">@Model.StudentName</h3>
+                        <p class="text-muted mb-1">@Model.StudentEmail</p>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary me-2">Student</span>
+                            @if (Model.LastActivity.HasValue)
+                            {
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Last active: @Model.LastActivity.Value.ToString("MMM dd, yyyy HH:mm")
+                                </small>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <a asp-action="Students" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Students
+                </a>
+            </div>
+
+            <!-- Stats -->
+            <div class="row mt-4 text-center">
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h4 class="text-primary">@Model.TotalEnrolledCourses</h4>
+                        <small class="text-muted">Enrolled Courses</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h4 class="text-success">@Model.TotalCompletedLessons</h4>
+                        <small class="text-muted">Completed Lessons</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h4 class="text-warning">
+                            @if (Model.TotalEnrolledCourses > 0)
+                            {
+                                var avgProgress = Model.Enrollments.Sum(e => e.ProgressPercentage) / Model.TotalEnrolledCourses;
+                                <text>@avgProgress.ToString("0")%</text>
+                            }
+                            else
+                            {
+                                <text>0%</text>
+                            }
+                        </h4>
+                        <small class="text-muted">Average Progress</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Enrollments -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="content-card">
+            <h5 class="mb-4">Course Enrollments (@Model.Enrollments.Count)</h5>
+
+            @if (!Model.Enrollments.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This student is not enrolled in any of your courses.
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var enrollment in Model.Enrollments)
+                    {
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <h6 class="mb-1">@enrollment.CourseTitle</h6>
+                                            <small class="text-muted">@enrollment.SubjectName</small>
+                                        </div>
+                                        <span class="badge bg-info">@enrollment.ProgressPercentage%</span>
+                                    </div>
+
+                                    <!-- Progress Bar -->
+                                    <div class="mb-3">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: @enrollment.ProgressPercentage%"></div>
+                                        </div>
+                                        <small class="text-muted">@enrollment.CompletedLessons/@enrollment.TotalLessons lessons</small>
+                                    </div>
+
+                                    <!-- Enrollment Info -->
+                                    <div class="d-flex justify-content-between text-muted small mb-3">
+                                        <span>
+                                            <i class="fas fa-calendar me-1"></i>
+                                            @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
+                                        </span>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="d-grid gap-2">
+                                        <a asp-action="ViewStudentProgress"
+                                   asp-route-courseId="@enrollment.CourseId"
+                                   asp-route-studentId="@Model.StudentId"
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-chart-line me-1"></i>View Detailed Progress
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("ViewStudent page loaded");
+        });
+    </script>
+}

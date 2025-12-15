@@ -1,0 +1,99 @@
+﻿@model Web_Lessons.ViewModels.UserProfileViewModel
+
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    // الحصول على المستخدم الحالي مباشرة
+    var user = await UserManager.GetUserAsync(User);
+
+    // تحديد الـ Layout بناءً على نوع المستخدم
+    Layout = user.IsTeacher ? "_TeacherLayout" : "_StudentLayout";
+
+    ViewData["Title"] = "Edit Profile";
+    ViewData["Description"] = "Update your profile information and photo";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="content-card">
+            <h4 class="mb-4">Edit Profile</h4>
+
+            <form method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <!-- Profile Image -->
+                <div class="text-center mb-4">
+                    <div class="position-relative d-inline-block">
+                        @if (!string.IsNullOrEmpty(Model.CurrentProfileImageUrl))
+                        {
+                            <img src="@Model.CurrentProfileImageUrl" alt="Profile"
+                                 class="profile-image mb-3" id="profileImagePreview">
+                        }
+                        else
+                        {
+                            <div class="profile-image-placeholder mb-3" id="profileImagePreview">
+                                <i class="fas fa-user fa-4x text-muted"></i>
+                            </div>
+                        }
+
+                        <label for="ProfileImage" class="btn btn-primary btn-sm position-absolute bottom-0 end-0">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                        <input asp-for="ProfileImage" type="file" class="d-none"
+                               id="ProfileImage" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName" class="form-label">Full Name *</label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label">Email Address</label>
+                        <input asp-for="Email" class="form-control" readonly />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Bio" class="form-label">Bio</label>
+                    <textarea asp-for="Bio" class="form-control" rows="3"
+                              placeholder="Tell us about yourself..."></textarea>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Image preview
+            $('#ProfileImage').on('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#profileImagePreview').html(`<img src="${e.target.result}" class="profile-image">`);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    </script>
+}
